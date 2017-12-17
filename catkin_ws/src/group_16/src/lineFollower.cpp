@@ -30,19 +30,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     }
 }
 
-void cameraCallback(const sensor_msgs::CompressedImage &image) {
-    ROS_INFO("\nReceived Image: %d\n-------------------------------", image.data[0]);
-}
-
 int main(int argc, char **argv) {
     ros::init(argc, argv, "line_follower");
 
     ros::NodeHandle nh;
 
     ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-    // subscribe to topic
-    //ros::Subscriber sub = nh.subscribe("/camera/image/compressed", 1, cameraCallback);
 
+    // subscribe to topic
     // start image processing
     cv::namedWindow("view",CV_WINDOW_NORMAL);
     lastTime = ros::Time::now();
@@ -50,7 +45,7 @@ int main(int argc, char **argv) {
     sub = it.subscribe("camera/image", 1, imageCallback,
                        ros::VoidPtr(), image_transport::TransportHints("compressed"));
 
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(60);
 
     int count = 0;
     while (ros::ok()) {
