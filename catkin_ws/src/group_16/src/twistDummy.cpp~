@@ -1,0 +1,24 @@
+#include "ros/ros.h"
+#include "geometry_msgs/Twist.h" // include own message type
+
+void chatterCallback(const geometry_msgs::Twist& twist_msg)
+{
+  ROS_INFO("Recived Message:\n    x:%f     y: %f\n-------------------------------", twist_msg.linear.x, twist_msg.linear.y);
+}
+
+int main(int argc, char **argv)
+{
+  // init with dummy name
+  ros::init(argc, argv, "twist_msg_dummy");
+
+  // create handle
+  ros::NodeHandle n;
+
+  // subscribe to topic
+  ros::Subscriber sub = n.subscribe("cmd_vel", 1000, chatterCallback);
+
+  // enter loop
+  ros::spin();
+
+  return 0;
+}
