@@ -6,12 +6,23 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <iostream>
+#include <cstdlib>
+#include <signal.h>
+#include <list>
+#include <cmath>
+#include <stdio.h>
+#include <ros/package.h>
+
 
 // Subscriber to bottom camera
 image_transport::Subscriber sub;
 
 // Time control
 ros::Time lastTime;
+
+//For SIGINT
+sig_atomic_t volatile g_request_shutdown = 0;
+
 
 // show the picture
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -30,8 +41,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     }
 }
 
+// overwrite for shutdown
+void SigIntHandler(int sig) {
+    g_request_shutdown = 1;
+}
+
+
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "line_follower");
+    // overwrite shutdown
+    ros::init(argc, argv, "line_follower", ros::init_options::NoSigintHandler);
 
     ros::NodeHandle nh;
 
@@ -39,16 +57,18 @@ int main(int argc, char **argv) {
 
     // subscribe to topic
     // start image processing
-    cv::namedWindow("view",CV_WINDOW_NORMAL);
+    cv::namedWindow("Robot perspective",CV_WINDOW_NORMAL);
     lastTime = ros::Time::now();
     image_transport::ImageTransport it(nh);
     sub = it.subscribe("camera/image", 1, imageCallback,
                        ros::VoidPtr(), image_transport::TransportHints("compressed"));
 
-    ros::Rate loop_rate(60);
+    // more then 10 hz is not possible with the camera
+    // at least have a somehow constant send rate
+    ros::Rate loop_rate(10);
 
     int count = 0;
-    while (ros::ok()) {
+    while (!g_request_shutdown) {
         geometry_msgs::Twist twist_msg;
 
         twist_msg.linear.x = count;
@@ -63,8 +83,13 @@ int main(int argc, char **argv) {
         loop_rate.sleep();
         ++count;
     }
-    cv::destroyWindow("view");
 
+    /*
+     * Overwrite the shut down routine, as window has to be closed but
+     * throws a segfault if not destroyed.
+     */
+    cv::destroyWindow("view");
+    ros::shutdown();
 
     return 0;
 }
