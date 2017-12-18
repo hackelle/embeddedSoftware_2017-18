@@ -30,7 +30,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
         // Get the msg image
         cv::Mat InImage;
         InImage = cv_bridge::toCvShare(msg, "bgr8")->image;
-        cv::imshow("view", InImage);
+        cv::imshow("Robot perspective", InImage);
         cv::waitKey(100);
     }
     catch (cv_bridge::Exception &e) {
