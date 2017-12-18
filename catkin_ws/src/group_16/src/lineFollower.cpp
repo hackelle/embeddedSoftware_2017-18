@@ -25,18 +25,15 @@ sig_atomic_t volatile g_request_shutdown = 0;
 
 
 // show the picture
-void imageCallback(const sensor_msgs::ImageConstPtr& msg)
-{
-    try
-    {
+void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
+    try {
         // Get the msg image
         cv::Mat InImage;
-        InImage = cv_bridge::toCvShare(msg,"bgr8" )->image;
+        InImage = cv_bridge::toCvShare(msg, "bgr8")->image;
         cv::imshow("view", InImage);
         cv::waitKey(100);
     }
-    catch (cv_bridge::Exception& e)
-    {
+    catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'jpg'.", msg->encoding.c_str());
     }
 }
@@ -57,7 +54,7 @@ int main(int argc, char **argv) {
 
     // subscribe to topic
     // start image processing
-    cv::namedWindow("Robot perspective",CV_WINDOW_NORMAL);
+    cv::namedWindow("Robot perspective", CV_WINDOW_NORMAL);
     lastTime = ros::Time::now();
     image_transport::ImageTransport it(nh);
     sub = it.subscribe("camera/image", 1, imageCallback,

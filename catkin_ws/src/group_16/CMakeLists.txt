@@ -8,15 +8,15 @@ project(group_16)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  sensor_msgs
-  cv_bridge
-  roscpp
-  rospy
-  message_generation
-  std_msgs
-  roslib
-  image_transport
-)
+        sensor_msgs
+        cv_bridge
+        roscpp
+        rospy
+        message_generation
+        std_msgs
+        roslib
+        image_transport
+        )
 find_package(OpenCV)
 
 ## System dependencies are found with CMake's conventions
@@ -108,10 +108,10 @@ find_package(OpenCV)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES group_16
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime roslib
-#  DEPENDS system_lib
+        #  INCLUDE_DIRS include
+        #  LIBRARIES group_16
+        CATKIN_DEPENDS roscpp rospy std_msgs message_runtime roslib
+        #  DEPENDS system_lib
 )
 
 ###########
