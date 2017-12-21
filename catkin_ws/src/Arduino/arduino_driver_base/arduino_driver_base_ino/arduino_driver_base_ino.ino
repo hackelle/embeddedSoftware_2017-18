@@ -4,11 +4,16 @@
  * Reads an executes twist_msgs as defined in ros standard.
  */
  
- // max. speed of tracks = 18 cm/s
- // max. rot = 4.5 rad/s => 1.4 sec/rotation
 #include <ros.h>
 #include <std_msgs/Empty.h>
 #include "geometry_msgs/Twist.h"
+ 
+ // max. speed of tracks = 18 cm/s
+double RIGHT_TRACK_MAX_FWRD = 0.18;
+double RIGHT_TRACK_MAX_BACK = 0.18;
+double LEFT_TRACK_MAX_FWRD = 0.18;
+double LEFT_TRACK_MAX_BACK = 0.18;
+ // max. rot = 4.5 rad/s => 1.4 sec/rotation
 
 // motor
 // left
@@ -96,6 +101,11 @@ void blink(){
   delay(30);
 }
 
+void calculate_velocities(double x, double yaw, int* left, int* right){
+  *left = (int) x;
+  *right = (int) x;
+}
+
 void led_messageCb( const std_msgs::Empty& toggle_msg){
   digitalWrite(YELLOW_LED, HIGH-digitalRead(13));   // blink the led
 }
@@ -104,7 +114,9 @@ void twist_messageCb( const geometry_msgs::Twist& twist_msg){
   blink();
   double yaw = twist_msg.angular.z; // rad/s
   double x = twist_msg.linear.x;    //   m/s
-  set_motor((int)x, (int)x);  // blink the led
+  int* left, right;
+  calculate_velocities(x, yaw, left, right);
+  set_motor(*left, *right);  // blink the led
 }
 
 ros::Subscriber<std_msgs::Empty> led_sub("toggle_led", led_messageCb);

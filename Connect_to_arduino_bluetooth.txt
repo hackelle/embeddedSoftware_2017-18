@@ -1,0 +1,24 @@
+Start up ros bluetooth:
+
+1) Scan for devices:
+>> sudo hcitool scan
+
+2) Search robot with correct number and substitude Mac address:
+>> sudo rfcomm bind /dev/rfcomm0 <mac address>
+
+3) Flash arduino
+
+4) Start core:
+>> core
+
+5) Start serial node:
+5.1) Bluetooth
+>> rosrun rosserial_python serial_node.py /dev/rfcomm0
+
+5.1) USB (left side Leo's laptop)
+>> rosrun rosserial_python serial_node.py /dev/ttyACM0
+
+If errors in (5) occour, ctrl+C / Strg+C and rerun (5).
+
+6) Test if it runs by testing the nodes topics
+
