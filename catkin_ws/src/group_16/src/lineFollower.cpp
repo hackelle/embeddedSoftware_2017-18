@@ -23,7 +23,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
         // detect lines
         std::vector<cv::Vec2f> lines;
-        cv::HoughLines(greyMat, lines, 5, CV_PI/180, 2500, 0, 0 );
+        cv::HoughLines(greyMat, lines, 5, CV_PI/180, 2000, 0, 0 );
         std::cout << lines.size() << std::endl;
 
         lineMat = greyMat.clone();
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "line_follower", ros::init_options::NoSigintHandler);
 
     ros::NodeHandle nh;
-    
+
     // TODO: Something with killing doesn't shut down correctly
     //signal(SIGINT, SigIntHandler);
 
@@ -104,7 +104,11 @@ int main(int argc, char **argv) {
      * Overwrite the shut down routine, as window has to be closed but
      * throws a segfault if not destroyed.
      */
-    cv::destroyWindow("view");
+    cv::destroyWindow("Robot perspective");
+    cv::destroyWindow("Scaled image");
+    cv::destroyWindow("Grey image");
+    cv::destroyWindow("Fourier image");
+    cv::destroyWindow("Line detection");
     ros::shutdown();
 
     return 0;
