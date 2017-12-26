@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
     // subscribe to topic
     // start image processing
     cv::namedWindow("Robot perspective", CV_WINDOW_NORMAL);
-    cv::namedWindow("Scaled image", CV_WINDOW_NORMAL);
+    //cv::namedWindow("Scaled image", CV_WINDOW_NORMAL);
     cv::namedWindow("Grey image", CV_WINDOW_NORMAL);
-    cv::namedWindow("Blur image", CV_WINDOW_NORMAL);
-    cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
+    //cv::namedWindow("Blur image", CV_WINDOW_NORMAL);
+    //cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
     cv::namedWindow("Edge image", CV_WINDOW_NORMAL);
     //cv::namedWindow("Fourier image", CV_WINDOW_NORMAL);
     //cv::namedWindow("Line detection", CV_WINDOW_NORMAL);
@@ -72,10 +72,10 @@ int main(int argc, char **argv) {
      * throws a segfault if not destroyed.
      */
     cv::destroyWindow("Robot perspective");
-    cv::destroyWindow("Scaled image");
+    //cv::destroyWindow("Scaled image");
     cv::destroyWindow("Grey image");
-    cv::destroyWindow("Blur image");
-    cv::destroyWindow("Canny image");
+    //cv::destroyWindow("Blur image");
+    //cv::destroyWindow("Canny image");
     cv::destroyWindow("Edge image");
     //cv::destroyWindow("Fourier image");
     //cv::destroyWindow("Line detection");

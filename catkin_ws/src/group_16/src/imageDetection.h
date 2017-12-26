@@ -12,6 +12,7 @@
 #include <list>
 #include <cmath>
 #include <stdio.h>
+#include <iostream>
 // open cv
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -45,5 +46,12 @@ std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage);
  */
 void colorReduce(cv::Mat& image, int div);
 void colorReduce(cv::Mat& image);
+
+/**
+ * Creates and returns a random alpha numeric string
+ * @param length length of the string
+ * @return random alpha numeric string
+ */
+std::string random_string(size_t length);
 
 #endif //CATKIN_WS_IMAGEDETECTION_H

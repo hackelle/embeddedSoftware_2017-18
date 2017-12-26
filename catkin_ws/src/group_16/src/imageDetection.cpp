@@ -4,14 +4,14 @@
 
 #include "imageDetection.h"
 
-cv::Mat fourier_transform(cv::Mat src){
+cv::Mat fourier_transform(cv::Mat src) {
     using namespace cv;
-    if( src.empty())
+    if (src.empty())
         return src;
 
     Mat padded;                            //expand input image to optimal size
-    int m = getOptimalDFTSize( src.rows );
-    int n = getOptimalDFTSize( src.cols ); // on the border add zero values
+    int m = getOptimalDFTSize(src.rows);
+    int n = getOptimalDFTSize(src.cols); // on the border add zero values
     copyMakeBorder(src, padded, 0, m - src.rows, 0, n - src.cols, BORDER_CONSTANT, Scalar::all(0));
 
     Mat planes[] = {Mat_<float>(padded), Mat::zeros(padded.size(), CV_32F)};
@@ -33,8 +33,8 @@ cv::Mat fourier_transform(cv::Mat src){
     magI = magI(Rect(0, 0, magI.cols & -2, magI.rows & -2));
 
     // rearrange the quadrants of Fourier image  so that the origin is at the image center
-    int cx = magI.cols/2;
-    int cy = magI.rows/2;
+    int cx = magI.cols / 2;
+    int cy = magI.rows / 2;
 
     Mat q0(magI, Rect(0, 0, cx, cy));   // Top-Left - Create a ROI per quadrant
     Mat q1(magI, Rect(cx, 0, cx, cy));  // Top-Right
@@ -56,10 +56,10 @@ cv::Mat fourier_transform(cv::Mat src){
     return magI; // return the result
 }
 
-std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage){
+std::vector <cv::Vec2f> detect_lines_hough(cv::Mat inImage) {
     // constants
     float houghLinesRadius = 5;
-    float houghLinesAngles = CV_PI/180;
+    float houghLinesAngles = CV_PI / 180;
     float houghLinesThreshold = 2000;
     int cannyLowThreshold = 5;
     int cannyRatio = 3; // recommended 3
@@ -72,7 +72,7 @@ std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage){
     cv::flip(inImage, inImage, 1);
 
     // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
-    cv::Size size(270,480);
+    cv::Size size(270, 480);
     cv::resize(inImage, smallMat, size);
     colorReduce(smallMat);
 
@@ -80,7 +80,7 @@ std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage){
     cv::cvtColor(smallMat, greyMat, CV_BGR2GRAY);
 
     // Blur image
-    cv::blur(greyMat, blurMat, cv::Size(3,3));
+    cv::blur(greyMat, blurMat, cv::Size(3, 3));
 
     // Detect edges with Canny
     cv::Canny(blurMat, cannyMat, cannyLowThreshold, cannyLowThreshold * cannyRatio, cannyKernalSize);
@@ -94,7 +94,7 @@ std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage){
     //fourierMat = fourier_transform(greyMat);
 
     // detect lines
-    std::vector<cv::Vec2f> lines;
+    std::vector <cv::Vec2f> lines;
     /*cv::HoughLines(greyMat, lines, houghLinesRadius, houghLinesAngles,
                    houghLinesThreshold, 0, 0 );
     std::cout << lines.size() << std::endl;
@@ -117,10 +117,10 @@ std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage){
 
     // Display images
     cv::imshow("Robot perspective", inImage);
-    cv::imshow("Scaled image", smallMat);
+    //cv::imshow("Scaled image", smallMat);
     cv::imshow("Grey image", greyMat);
-    cv::imshow("Blur image", blurMat);
-    cv::imshow("Canny image", cannyMat);
+    //cv::imshow("Blur image", blurMat);
+    //cv::imshow("Canny image", cannyMat);
     cv::imshow("Edge image", edgeMat);
     /*if (!fourierMat.empty())
         cv::imshow("Fourier image", fourierMat);
@@ -129,21 +129,35 @@ std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage){
     return lines;
 }
 
-void colorReduce(cv::Mat& image){
+void colorReduce(cv::Mat &image) {
     colorReduce(image, 64);
 }
 
-void colorReduce(cv::Mat& image, int div){
+void colorReduce(cv::Mat &image, int div) {
     int nl = image.rows;                    // number of lines
     int nc = image.cols * image.channels(); // number of elements per line
 
-    for (int j = 0; j < nl; j++)    {
+    for (int j = 0; j < nl; j++) {
         // get the address of row j
-        uchar* data = image.ptr<uchar>(j);
+        uchar *data = image.ptr<uchar>(j);
 
-        for (int i = 0; i < nc; i++)        {
+        for (int i = 0; i < nc; i++) {
             // process each pixel
             data[i] = data[i] / div * div + div / 2;
         }
     }
+}
+
+std::string random_string(size_t length) {
+    auto randChar = []() -> char {
+        const char charset[] =
+                "0123456789"
+                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                        "abcdefghijklmnopqrstuvwxyz";
+        const size_t max_index = (sizeof(charset) - 1);
+        return charset[rand() % max_index];
+    };
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, randChar);
+    return str;
 }
