@@ -43,8 +43,8 @@
       <file leaf-file-name="imageDetection.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/group_16/src/imageDetection.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
-              <caret line="58" column="61" lean-forward="false" selection-start-line="58" selection-start-column="61" selection-end-line="58" selection-end-column="61" />
+            <state relative-caret-position="306">
+              <caret line="59" column="16" lean-forward="true" selection-start-line="59" selection-start-column="16" selection-end-line="59" selection-end-column="16" />
               <folding />
             </state>
           </provider>
@@ -183,12 +183,12 @@
       <workItem from="1513706374186" duration="3687000" />
       <workItem from="1513781581830" duration="4098000" />
       <workItem from="1513843023181" duration="2681000" />
-      <workItem from="1513959413691" duration="10297000" />
+      <workItem from="1513959413691" duration="10378000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="30385000" />
+    <option name="totallyTimeSpent" value="30466000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="300" y="24" width="1303" height="780" extended-state="6" />
@@ -466,8 +466,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/group_16/src/imageDetection.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="58" column="61" lean-forward="false" selection-start-line="58" selection-start-column="61" selection-end-line="58" selection-end-column="61" />
+        <state relative-caret-position="306">
+          <caret line="59" column="16" lean-forward="true" selection-start-line="59" selection-start-column="16" selection-end-line="59" selection-end-column="16" />
           <folding />
         </state>
       </provider>
