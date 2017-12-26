@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(group_16)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -137,7 +137,7 @@ add_executable(twistDummy src/twistDummy.cpp)
 target_link_libraries(twistDummy ${catkin_LIBRARIES})
 add_dependencies(twistDummy group_16_generate_messages_cpp)
 
-add_executable(lineFollower src/lineFollower.cpp)
+add_executable(lineFollower src/lineFollower.cpp src/imageDetection.cpp)
 target_link_libraries(lineFollower ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(lineFollower group_16_generate_messages_cpp)
 

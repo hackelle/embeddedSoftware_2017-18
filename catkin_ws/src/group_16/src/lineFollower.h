@@ -22,6 +22,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include "opencv2/core/core.hpp"
+// own package
+#include "imageDetection.h"
 
 
 // Subscriber to bottom camera
@@ -37,9 +39,5 @@ sig_atomic_t volatile g_request_shutdown = 0;
 void imageCallback(const sensor_msgs::ImageConstPtr &msg);
 void SigIntHandler(int sig);
 int main(int argc, char **argv);
-
-// performs fourier transformation on src
-// returns src if src is empty
-cv::Mat fourier_transform(cv::Mat src);
 
 #endif //CATKIN_WS_LINEFOLLOWER_H
