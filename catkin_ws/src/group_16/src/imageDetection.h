@@ -54,4 +54,13 @@ void colorReduce(cv::Mat& image);
  */
 std::string random_string(size_t length);
 
+/**
+ * Performs a perspective transformation optimized for usage on the arduino Robot
+ * in combination with a ZTE AXON 7 camera in the module "Embedded Software" in
+ * Q2, TU DELFT 2017/18.
+ * @param src The source image
+ * @param dst The destination image
+ */
+void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst);
+
 #endif //CATKIN_WS_IMAGEDETECTION_H
