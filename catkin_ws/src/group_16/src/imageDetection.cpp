@@ -56,11 +56,8 @@ cv::Mat fourier_transform(cv::Mat src) {
     return magI; // return the result
 }
 
-std::vector <cv::Vec2f> detect_lines_hough(cv::Mat inImage) {
+float detect_line_curvature(cv::Mat inImage) {
     // constants
-    float houghLinesRadius = 5;
-    float houghLinesAngles = CV_PI / 180;
-    float houghLinesThreshold = 2000;
     int cannyLowThreshold = 5;
     int cannyRatio = 3; // recommended 3
     int cannyKernalSize = 3; // recommended 3
@@ -74,7 +71,7 @@ std::vector <cv::Vec2f> detect_lines_hough(cv::Mat inImage) {
     // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
     cv::Size size(270, 480);
     cv::resize(inImage, smallMat, size);
-    colorReduce(smallMat);
+    colorReduce(smallMat, 16);
 
 
     // Make grey scale
@@ -86,48 +83,21 @@ std::vector <cv::Vec2f> detect_lines_hough(cv::Mat inImage) {
     // Detect edges with Canny
     cv::Canny(blurMat, cannyMat, cannyLowThreshold, cannyLowThreshold * cannyRatio, cannyKernalSize);
 
-    // Make picture of only white edges on black background
+    // Make picture of only colorful edges on black background
     edgeMat = cv::Scalar::all(0);
     smallMat.copyTo(edgeMat, cannyMat);
 
-
-    // fourier transform
-    //fourierMat = fourier_transform(greyMat);
-
-    // detect lines
-    std::vector <cv::Vec2f> lines;
-    /*cv::HoughLines(greyMat, lines, houghLinesRadius, houghLinesAngles,
-                   houghLinesThreshold, 0, 0 );
-    std::cout << lines.size() << std::endl;
-
-    lineMat = greyMat.clone();
-    // Draw lines in image
-    for( size_t i = 0; i < lines.size(); i++ )
-    {
-        float rho = lines[i][0], theta = lines[i][1];
-        cv::Point pt1, pt2;
-        double a = cos(theta), b = sin(theta);
-        double x0 = a*rho, y0 = b*rho;
-        pt1.x = cvRound(x0 + 1000*(-b));
-        pt1.y = cvRound(y0 + 1000*(a));
-        pt2.x = cvRound(x0 - 1000*(-b));
-        pt2.y = cvRound(y0 - 1000*(a));
-        line(lineMat, pt1, pt2, cv::Scalar(0, 0, 255, 255), 3, CV_AA);
-    }
-     */
+    // fit curvatures lines
 
     // Display images
     cv::imshow("Robot perspective", inImage);
     //cv::imshow("Scaled image", smallMat);
     cv::imshow("Grey image", greyMat);
     //cv::imshow("Blur image", blurMat);
-    //cv::imshow("Canny image", cannyMat);
-    cv::imshow("Edge image", edgeMat);
-    /*if (!fourierMat.empty())
-        cv::imshow("Fourier image", fourierMat);
-    cv::imshow("Line detection", lineMat);
-*/
-    return lines;
+    cv::imshow("Canny image", cannyMat);
+    //cv::imshow("Edge image", edgeMat);
+
+    return 0;
 }
 
 void colorReduce(cv::Mat &image) {

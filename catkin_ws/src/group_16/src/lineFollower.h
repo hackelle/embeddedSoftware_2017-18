@@ -35,9 +35,15 @@ ros::Time lastTime;
 //For SIGINT
 sig_atomic_t volatile g_request_shutdown = 0;
 
+// Publisher
+ros::Publisher twist_pub;
+
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg);
 void SigIntHandler(int sig);
 int main(int argc, char **argv);
+
+void sendMessage(float linear_x, float linear_y, float linear_z,
+                 float angular_x, float angular_y, float angular_z);
 
 #endif //CATKIN_WS_LINEFOLLOWER_H

@@ -27,17 +27,17 @@
 cv::Mat fourier_transform(cv::Mat src);
 
 /**
- * Performs a line detection and displays steps:
+ * Performs a line detection and displays some steps:
  * 1) Rotate 90 deg clockwise (Shown in cv::namedWindow "Robot perspective").
  * 2) Scale image to 270*480 (Shown in cv::namedWindow "Scaled image").
- * 3) Make image greyscale (Shown in cv::namedWindow "Grey image").
- * 4) Fourier transform image (Shown in cv::namedWindow "Fourier image").
- * 5) Hough transform image to detect lines (Shown in cv::namedWindow "Line detection").
+ * 3) Make image greyscale (Shown in cv::namedWindow "Grey image") and reduce color depth.
+ * 4) Canny detect edges in the picture.
+ * 5) Fit different curvatures for angular velocity and return the best fitting one.
  *
- * @param inImage cv::Mat matrix of picture to find lines on
- * @return std::vector<cv::Vec2f> vector of lines
+ * @param inImage cv::Mat matrix of picture to find line curvature in
+ * @return float of best angular velocity fitting in between the line edges
  */
-std::vector<cv::Vec2f> detect_lines_hough(cv::Mat inImage);
+float detect_line_curvature(cv::Mat inImage);
 
 /**
  * Reduces the color depth of an image

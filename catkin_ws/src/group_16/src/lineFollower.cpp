@@ -1,13 +1,27 @@
 #include "lineFollower.h"
 
+#define DEBUG_LOAD
+
 // show the picture
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
-        // Get the msg image, convert to a matrix
-        cv::Mat InImage;
-        InImage = cv_bridge::toCvShare(msg, "bgr8")->image;
+        // use the bridge to convert msg image to a matrix
+        cv::Mat InImage = cv_bridge::toCvShare(msg, "bgr8")->image;
 
-        detect_lines_hough(InImage);
+        // save if debugging-saving
+#ifdef DEBUG_SAVE
+        imwrite("debug_image.jpg", InImage);
+#endif // DEBUG_SAVE
+
+
+        ROS_INFO_STREAM("Time loop before finding lines = " << ros::Time::now());
+        float angular_vel_z = detect_line_curvature(InImage);
+
+        ROS_INFO_STREAM("Time loop before sending message = " << ros::Time::now());
+        // always go full speed (no robot can go 1m/s)
+        sendMessage(1,0,0,
+                    0,0,angular_vel_z);
+        ROS_INFO_STREAM("Time loop after sending message = " << ros::Time::now());
 
         cv::waitKey(100);
     }
@@ -26,7 +40,22 @@ int main(int argc, char **argv) {
     // FIXME: Something with killing doesn't shut down correctly
     //signal(SIGINT, SigIntHandler);
 
-    ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+#ifdef DEBUG_LOAD
+    ros::Publisher debug_pub = nh.advertise<sensor_msgs::CompressedImage>("camera/image/compressed", 1);
+
+    // create message to publish each time
+    cv::Mat img = cv::imread("debug_image.jpg", 1); // << image MUST be contained here
+    cv_bridge::CvImage img_bridge;
+    sensor_msgs::CompressedImage img_msg; // >> message to be sent
+
+    std_msgs::Header header; // empty header
+    header.seq = 1234; // user defined counter
+    header.stamp = ros::Time::now(); // time
+    img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, img);
+    img_bridge.toCompressedImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
+#endif
+
+    twist_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 
     // subscribe to topic
     // start image processing
@@ -34,10 +63,8 @@ int main(int argc, char **argv) {
     //cv::namedWindow("Scaled image", CV_WINDOW_NORMAL);
     cv::namedWindow("Grey image", CV_WINDOW_NORMAL);
     //cv::namedWindow("Blur image", CV_WINDOW_NORMAL);
-    //cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
-    cv::namedWindow("Edge image", CV_WINDOW_NORMAL);
-    //cv::namedWindow("Fourier image", CV_WINDOW_NORMAL);
-    //cv::namedWindow("Line detection", CV_WINDOW_NORMAL);
+    cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
+    //cv::namedWindow("Edge image", CV_WINDOW_NORMAL);
     // FIXME: for some reason the last window is not shown
     //cv::namedWindow("dummy", CV_WINDOW_NORMAL);
 
@@ -48,23 +75,17 @@ int main(int argc, char **argv) {
 
     // more then 10 hz is not possible with the camera
     // at least have a somehow constant send rate
-    ros::Rate loop_rate(10);
-
-    int count = 0;
     while (!g_request_shutdown) {
-        geometry_msgs::Twist twist_msg;
-
-        twist_msg.linear.x = count;
-        twist_msg.linear.y = count - 1;
-
-        ROS_INFO("\nSetting:\n    x:%f     y: %f", twist_msg.linear.x, twist_msg.linear.y);
-
-        twist_pub.publish(twist_msg);
+        ROS_INFO_STREAM("Time loop = " << ros::Time::now());
 
         ros::spinOnce();
 
+#ifdef DEBUG_LOAD
+        // send the saved&reloaded image to trigger the callback
+        debug_pub.publish(img_msg);
+#endif // DEBUG_LOAD
+
         loop_rate.sleep();
-        ++count;
     }
 
     /*
@@ -75,10 +96,8 @@ int main(int argc, char **argv) {
     //cv::destroyWindow("Scaled image");
     cv::destroyWindow("Grey image");
     //cv::destroyWindow("Blur image");
-    //cv::destroyWindow("Canny image");
-    cv::destroyWindow("Edge image");
-    //cv::destroyWindow("Fourier image");
-    //cv::destroyWindow("Line detection");
+    cv::destroyWindow("Canny image");
+    //cv::destroyWindow("Edge image");
     ros::shutdown();
 
     return 0;
@@ -87,4 +106,28 @@ int main(int argc, char **argv) {
 // overwrite for shutdown
 void SigIntHandler(int sig) {
     g_request_shutdown = 1;
+}
+
+void sendMessage(float linear_x, float linear_y, float linear_z,
+                 float angular_x, float angular_y, float angular_z){
+
+    geometry_msgs::Twist twist_msg;
+
+    twist_msg.linear.x = linear_x;
+    twist_msg.linear.y = linear_y;
+    twist_msg.linear.z = linear_z;
+
+    twist_msg.angular.x = angular_x;
+    twist_msg.angular.y = angular_y;
+    twist_msg.angular.z = angular_z;
+
+    ROS_INFO("\nSetting: lin       ang"
+             "\n      x: %3f  %3f"
+             "\n      y: %3f  %3f"
+             "\n      z: %3f  %3f",
+             twist_msg.linear.x, twist_msg.angular.x,
+             twist_msg.linear.y, twist_msg.angular.y,
+             twist_msg.linear.z, twist_msg.angular.z);
+
+    twist_pub.publish(twist_msg);
 }
