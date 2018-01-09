@@ -1,10 +1,10 @@
 #include "lineFollower.h"
 
-#define DEBUG_SAVE
+//#define DEBUG_SAVE
+#define DEBUG_LOAD
 
 // show the picture
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
-    ROS_INFO_STREAM("Time cb start = " << ros::Time::now());
     try {
         // use the bridge to convert msg image to a matrix
         cv::Mat InImage = cv_bridge::toCvShare(msg, "bgr8")->image;
@@ -21,12 +21,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
         sendMessage(1,0,0,
                     0,0,angular_vel_z);
 
-        cv::waitKey(25);
+        // wait a short time for image-display (25 for mobile, 100 for debug)
+        cv::waitKey(100);
     }
     catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'jpg'.", msg->encoding.c_str());
     }
-    ROS_INFO_STREAM("Time cb end = " << ros::Time::now());
 }
 
 
@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
     //cv::namedWindow("Blur image", CV_WINDOW_NORMAL);
     cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
     //cv::namedWindow("Edge image", CV_WINDOW_NORMAL);
+    cv::namedWindow("Perspective image", CV_WINDOW_NORMAL);
     // FIXME: for some reason the last window is not shown
     //cv::namedWindow("dummy", CV_WINDOW_NORMAL);
 
@@ -72,8 +73,6 @@ int main(int argc, char **argv) {
     sub = it.subscribe("camera/image", 1, imageCallback,
                        ros::VoidPtr(), image_transport::TransportHints("compressed"));
 
-    // more then 10 hz is not possible with the camera
-    // at least have a somehow constant send rate
     while (!g_request_shutdown) {
 
         ros::spinOnce();
@@ -83,7 +82,6 @@ int main(int argc, char **argv) {
         debug_pub.publish(img_msg);
 #endif // DEBUG_LOAD
 
-        //loop_rate.sleep();
     }
 
     /*
@@ -96,6 +94,7 @@ int main(int argc, char **argv) {
     //cv::destroyWindow("Blur image");
     cv::destroyWindow("Canny image");
     //cv::destroyWindow("Edge image");
+    cv::destroyWindow("Perspective image");
     ros::shutdown();
 
     return 0;

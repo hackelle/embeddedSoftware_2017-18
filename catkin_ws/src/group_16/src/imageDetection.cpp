@@ -62,7 +62,8 @@ float detect_line_curvature(cv::Mat inImage) {
     int cannyRatio = 3; // recommended 3
     int cannyKernalSize = 3; // recommended 3
 
-    cv::Mat smallMat, greyMat, blurMat, cannyMat, edgeMat, perspectiveMat, fourierMat, lineMat;
+    cv::Mat smallMat, greyMat, blurMat, cannyMat, edgeMat,
+            perspectiveMat, fourierMat, lineMat;
 
     // Transpose and flip to get portrait mode
     cv::transpose(inImage, inImage);
@@ -87,6 +88,9 @@ float detect_line_curvature(cv::Mat inImage) {
     edgeMat = cv::Scalar::all(0);
     smallMat.copyTo(edgeMat, cannyMat);
 
+    // transform with perspective
+    perspectiveTransformForRobot(cannyMat, perspectiveMat);
+
     // fit curvatures lines
 
     // Display images
@@ -96,6 +100,7 @@ float detect_line_curvature(cv::Mat inImage) {
     //cv::imshow("Blur image", blurMat);
     cv::imshow("Canny image", cannyMat);
     //cv::imshow("Edge image", edgeMat);
+    cv::imshow("Perspective image", perspectiveMat);
 
     return 0;
 }
@@ -147,13 +152,20 @@ void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst) {
     // Set the lambda matrix the same type and size as input
     lambda = Mat::zeros(src.rows, src.cols, src.type());
 
+    // "Destination points"
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input
+    srcQuad[0] = Point2f(0, 0);
+    srcQuad[1] = Point2f(src.cols -1, 0);
+    srcQuad[2] = Point2f(src.cols + 100, src.rows-1);
+    srcQuad[3] = Point2f(-100, src.rows-1);
+    /*
     srcQuad[0] = Point2f(-30, -60);
     srcQuad[1] = Point2f(src.cols + 50, -50);
     srcQuad[2] = Point2f(src.cols + 100, src.rows + 50);
-    srcQuad[3] = Point2f(-50, src.rows + 50);
+    srcQuad[3] = Point2f(-50, src.rows + 50);*/
 
+    // "Source points"
     // The 4 points where the mapping is to be done , from top-left in clockwise order
     dstQuad[0] = Point2f(0, 0);
     dstQuad[1] = Point2f(src.cols - 1, 0);
