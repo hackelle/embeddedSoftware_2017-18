@@ -1,9 +1,10 @@
 #include "lineFollower.h"
 
-#define DEBUG_LOAD
+#define DEBUG_SAVE
 
 // show the picture
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
+    ROS_INFO_STREAM("Time cb start = " << ros::Time::now());
     try {
         // use the bridge to convert msg image to a matrix
         cv::Mat InImage = cv_bridge::toCvShare(msg, "bgr8")->image;
@@ -14,20 +15,18 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 #endif // DEBUG_SAVE
 
 
-        ROS_INFO_STREAM("Time loop before finding lines = " << ros::Time::now());
         float angular_vel_z = detect_line_curvature(InImage);
 
-        ROS_INFO_STREAM("Time loop before sending message = " << ros::Time::now());
         // always go full speed (no robot can go 1m/s)
         sendMessage(1,0,0,
                     0,0,angular_vel_z);
-        ROS_INFO_STREAM("Time loop after sending message = " << ros::Time::now());
 
-        cv::waitKey(100);
+        cv::waitKey(25);
     }
     catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'jpg'.", msg->encoding.c_str());
     }
+    ROS_INFO_STREAM("Time cb end = " << ros::Time::now());
 }
 
 
@@ -76,7 +75,6 @@ int main(int argc, char **argv) {
     // more then 10 hz is not possible with the camera
     // at least have a somehow constant send rate
     while (!g_request_shutdown) {
-        ROS_INFO_STREAM("Time loop = " << ros::Time::now());
 
         ros::spinOnce();
 
@@ -85,7 +83,7 @@ int main(int argc, char **argv) {
         debug_pub.publish(img_msg);
 #endif // DEBUG_LOAD
 
-        loop_rate.sleep();
+        //loop_rate.sleep();
     }
 
     /*
