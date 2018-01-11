@@ -12,6 +12,7 @@
 #include <list>
 #include <cmath>
 #include <stdio.h>
+#include <string>
 // ros
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h" // include twist message type
@@ -38,6 +39,8 @@ sig_atomic_t volatile g_request_shutdown = 0;
 // Publisher
 ros::Publisher twist_pub;
 
+// path of debug image
+std::string image_path  = "debug_image_red_t.jpg";
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg);
 void SigIntHandler(int sig);

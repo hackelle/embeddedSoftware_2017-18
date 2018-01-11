@@ -91,7 +91,46 @@ float detect_line_curvature(cv::Mat inImage) {
     // transform with perspective
     perspectiveTransformForRobot(cannyMat, perspectiveMat);
 
+    /*
     // fit curvatures lines
+    // draw 45 different circles
+    CvPoint center;
+    double distances[54];
+    double smallest_distance_speed;
+    double smallest_distance_ang;
+    double smallest_distance_radius;
+    int y_pixel_offset = 200;
+
+    // fit curvatures
+    fit_lines(perspectiveMat, smallest_distance_speed, smallest_distance_ang,
+              smallest_distance_radius, distances, y_pixel_offset);
+
+    // radius from middle of picture
+    center.x = smallest_distance_radius + perspectiveMat.cols/2;
+    center.y = perspectiveMat.rows-1 + y_pixel_offset;
+    cv::circle(perspectiveMat, center, 300, cv::Scalar(255, 0, 0), 3);
+*/
+
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+    // Find contours
+    cv::findContours(perspectiveMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
+    // calculate approx x
+    double av_x = 0;
+    int points = 0;
+    for (auto & c : contours){
+        for (auto & p: c){
+            if (p.y < perspectiveMat.cols * 0.875){
+                // only use lowest 1/8th of picture
+                av_x += p.x;
+                points++;
+            }
+        }
+    }
+    av_x /= points;
+    cv::line(perspectiveMat, cv::Point (perspectiveMat.cols/2 ,perspectiveMat.rows-1),
+                cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(255, 0, 0), 3);
 
     // Display images
     cv::imshow("Robot perspective", inImage);
@@ -155,10 +194,11 @@ void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst) {
     // "Destination points"
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input
+    int col_offset = 350;
     srcQuad[0] = Point2f(0, 0);
     srcQuad[1] = Point2f(src.cols -1, 0);
-    srcQuad[2] = Point2f(src.cols + 100, src.rows-1);
-    srcQuad[3] = Point2f(-100, src.rows-1);
+    srcQuad[2] = Point2f(src.cols + col_offset, src.rows-1);
+    srcQuad[3] = Point2f(-col_offset, src.rows-1);
     /*
     srcQuad[0] = Point2f(-30, -60);
     srcQuad[1] = Point2f(src.cols + 50, -50);
@@ -177,4 +217,46 @@ void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst) {
 
     // Apply the Perspective Transform just found to the src image
     warpPerspective(src, dst, lambda, dst.size());
+}
+
+void fit_lines(cv::Mat &perspectiveMat, double &smallest_distance_speed, double &smallest_distance_ang,
+               double &smallest_distance_radius, double* distances, int y_pixel_offset){
+
+    double smallest_distance = HUGE_VAL;
+    double PI = 3.14159265358;
+    int counter = 0;
+
+    for (double i = 0.07; i < 0.18; i+=0.02) {
+        // try for linear speeds 7,9,11,13,15,17 [cm]
+        for (double j = -4.0/8*PI; j < 5.0/8*PI; j+=1.0/8*PI){
+            // try for angular speeds -4/8 pi .. 4/8 pi in 1/8 pi steps (-90° to +90°)
+            double angular_z = 0.0001;
+            if (j != 0) angular_z = j;
+            double linear_x = i;
+
+            // calculate radius of the circle
+            double radius = linear_x * (2*PI/angular_z) * y_pixel_offset;
+
+            // calculate distance of each point to this circle
+            std::vector<cv::Point> locations;   // output, locations of non-zero (=white) pixels
+            cv::findNonZero(perspectiveMat, locations);
+            // access pixel coordinates
+            // add all distances (weighted by distance to lower end of picture)
+            distances[counter] = 0;
+            for (auto & loc :locations){
+                distances[counter] += abs(sqrt(pow(loc.x,2) + pow(loc.y,2)) - radius)
+                                      * ((float)loc.y/perspectiveMat.cols);
+            }
+
+            if (distances[counter] < smallest_distance){
+                smallest_distance_speed = linear_x;
+                smallest_distance_ang = angular_z;
+                smallest_distance_radius = radius;
+                smallest_distance = distances[counter];
+                std::cout << "New smallest distance = " <<  smallest_distance << " @ (" <<
+                          smallest_distance_speed << "|" << smallest_distance_ang << ")" << std::endl;
+            }
+            counter++;
+        }
+    }
 }

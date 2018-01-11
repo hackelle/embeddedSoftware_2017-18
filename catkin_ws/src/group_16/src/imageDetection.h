@@ -19,6 +19,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include "opencv2/core/core.hpp"
 
+
 /**
  * Performs fourier transformation on a cv::Mat object.
  * @param src cv::Mat matrix of a picture
@@ -62,5 +63,8 @@ std::string random_string(size_t length);
  * @param dst The destination image
  */
 void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst);
+
+void fit_lines(cv::Mat &img, double &smallest_distance_speed, double &smallest_distance_ang,
+                    double &smallest_distance_radius, double* distances, int y_pixel_offset);
 
 #endif //CATKIN_WS_IMAGEDETECTION_H

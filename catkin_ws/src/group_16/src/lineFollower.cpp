@@ -11,7 +11,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
         // save if debugging-saving
 #ifdef DEBUG_SAVE
-        imwrite("debug_image.jpg", InImage);
+        imwrite(image_path, InImage);
 #endif // DEBUG_SAVE
 
 
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     ros::Publisher debug_pub = nh.advertise<sensor_msgs::CompressedImage>("camera/image/compressed", 1);
 
     // create message to publish each time
-    cv::Mat img = cv::imread("debug_image.jpg", 1); // << image MUST be contained here
+    cv::Mat img = cv::imread(image_path, 1); // << image MUST be contained here
     cv_bridge::CvImage img_bridge;
     sensor_msgs::CompressedImage img_msg; // >> message to be sent
 
