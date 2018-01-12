@@ -72,7 +72,7 @@ float detect_line_curvature(cv::Mat inImage) {
     // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
     cv::Size size(270, 480);
     cv::resize(inImage, smallMat, size);
-    colorReduce(smallMat, 16);
+    colorReduce(smallMat, 8);
 
 
     // Make grey scale
@@ -116,13 +116,15 @@ float detect_line_curvature(cv::Mat inImage) {
     // Find contours
     cv::findContours(perspectiveMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
+    // how much of the bottom part of the picture is relevant for our calculation?
+    double relevant_part = 0.2;
+
     // calculate approx x
     double av_x = 0;
     int points = 0;
     for (auto & c : contours){
         for (auto & p: c){
-            if (p.y < perspectiveMat.cols * 0.875){
-                // only use lowest 1/8th of picture
+            if (p.y < perspectiveMat.cols * (1-relevant_part)){
                 av_x += p.x;
                 points++;
             }
@@ -131,6 +133,10 @@ float detect_line_curvature(cv::Mat inImage) {
     av_x /= points;
     cv::line(perspectiveMat, cv::Point (perspectiveMat.cols/2 ,perspectiveMat.rows-1),
                 cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(255, 0, 0), 3);
+
+    // calculate the angle of rotation based on the distance
+    double distance_to_middle = abs(av_x-perspectiveMat.cols/2);
+    double angle = distance_to_middle *  3.14159265/ perspectiveMat.cols;
 
     // Display images
     cv::imshow("Robot perspective", inImage);
@@ -141,7 +147,7 @@ float detect_line_curvature(cv::Mat inImage) {
     //cv::imshow("Edge image", edgeMat);
     cv::imshow("Perspective image", perspectiveMat);
 
-    return 0;
+    return angle;
 }
 
 void colorReduce(cv::Mat &image) {

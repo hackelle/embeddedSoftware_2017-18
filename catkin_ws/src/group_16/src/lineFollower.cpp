@@ -18,7 +18,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
         float angular_vel_z = detect_line_curvature(InImage);
 
         // always go full speed (no robot can go 1m/s)
-        sendMessage(1,0,0,
+        sendMessage(0.1,0,0,
                     0,0,angular_vel_z);
 
         // wait a short time for image-display (25 for mobile, 100 for debug)
