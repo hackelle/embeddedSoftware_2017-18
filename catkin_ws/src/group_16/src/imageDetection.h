@@ -28,17 +28,33 @@
 cv::Mat fourier_transform(cv::Mat src);
 
 /**
+ * Use hough transform and linear approximation to find a line
+ *
+ * @param inImage cv::Mat matrix of picture to find line curvature in
+ * @return float of best angular velocity fitting in between the line edges
+ */
+float detect_line(cv::Mat inImage);
+
+/**
+ * Use hough transform to find a line
+ *
+ * @param inImage cv::Mat matrix of picture to find line curvature in
+ * @return float of best angular velocity fitting in between the line edges
+ */
+float detect_line_hough(cv::Mat inImage);
+
+/**
  * Performs a line detection and displays some steps:
  * 1) Rotate 90 deg clockwise (Shown in cv::namedWindow "Robot perspective").
  * 2) Scale image to 270*480 (Shown in cv::namedWindow "Scaled image").
  * 3) Make image greyscale (Shown in cv::namedWindow "Grey image") and reduce color depth.
  * 4) Canny detect edges in the picture.
- * 5) Fit different curvatures for angular velocity and return the best fitting one.
+ * 5) Take average of x_coord to approximate linear.
  *
  * @param inImage cv::Mat matrix of picture to find line curvature in
  * @return float of best angular velocity fitting in between the line edges
  */
-float detect_line_curvature(cv::Mat inImage);
+float detect_line_linear(cv::Mat inImage);
 
 /**
  * Reduces the color depth of an image

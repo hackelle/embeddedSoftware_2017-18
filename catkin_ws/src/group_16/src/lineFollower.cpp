@@ -15,14 +15,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 #endif // DEBUG_SAVE
 
 
-        float angular_vel_z = detect_line_curvature(InImage);
+        float angular_vel_z = detect_line_hough(InImage);
 
         // always go full speed (no robot can go 1m/s)
         sendMessage(0.1,0,0,
                     0,0,angular_vel_z);
 
         // wait a short time for image-display (25 for mobile, 100 for debug)
-        cv::waitKey(100);
+        cv::waitKey(25);
     }
     catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'jpg'.", msg->encoding.c_str());
@@ -65,6 +65,7 @@ int main(int argc, char **argv) {
     cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
     //cv::namedWindow("Edge image", CV_WINDOW_NORMAL);
     cv::namedWindow("Perspective image", CV_WINDOW_NORMAL);
+    cv::namedWindow("Line image", CV_WINDOW_NORMAL);
     // FIXME: for some reason the last window is not shown
     //cv::namedWindow("dummy", CV_WINDOW_NORMAL);
 
@@ -95,6 +96,7 @@ int main(int argc, char **argv) {
     cv::destroyWindow("Canny image");
     //cv::destroyWindow("Edge image");
     cv::destroyWindow("Perspective image");
+    cv::destroyWindow("Line image");
     ros::shutdown();
 
     return 0;
