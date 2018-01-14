@@ -57,7 +57,7 @@ cv::Mat fourier_transform(cv::Mat src) {
 }
 
 float detect_line(cv::Mat inImage){
-    return 0;
+    return 0.3 * detect_line_hough(inImage) + 0.7 * detect_line_linear(inImage);
 }
 
 float detect_line_hough(cv::Mat inImage){
@@ -170,26 +170,6 @@ float detect_line_linear(cv::Mat inImage) {
     // transform with perspective
     perspectiveTransformForRobot(cannyMat, perspectiveMat);
 
-    /*
-    // fit curvatures lines
-    // draw 45 different circles
-    CvPoint center;
-    double distances[54];
-    double smallest_distance_speed;
-    double smallest_distance_ang;
-    double smallest_distance_radius;
-    int y_pixel_offset = 200;
-
-    // fit curvatures
-    fit_lines(perspectiveMat, smallest_distance_speed, smallest_distance_ang,
-              smallest_distance_radius, distances, y_pixel_offset);
-
-    // radius from middle of picture
-    center.x = smallest_distance_radius + perspectiveMat.cols/2;
-    center.y = perspectiveMat.rows-1 + y_pixel_offset;
-    cv::circle(perspectiveMat, center, 300, cv::Scalar(255, 0, 0), 3);
-*/
-
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
     // Find contours
@@ -214,7 +194,7 @@ float detect_line_linear(cv::Mat inImage) {
                 cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(255, 0, 0), 3);
 
     // calculate the angle of rotation based on the distance
-    double distance_to_middle = abs(av_x-perspectiveMat.cols/2);
+    double distance_to_middle = av_x-perspectiveMat.cols/2;
     double angle = distance_to_middle *  3.14159265/ perspectiveMat.cols;
 
     // Display images

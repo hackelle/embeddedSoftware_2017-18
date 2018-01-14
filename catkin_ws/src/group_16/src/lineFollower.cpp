@@ -15,7 +15,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 #endif // DEBUG_SAVE
 
 
-        float angular_vel_z = detect_line_hough(InImage);
+        float angular_vel_z = detect_line(InImage);
 
         // always go full speed (no robot can go 1m/s)
         sendMessage(0.1,0,0,
