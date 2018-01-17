@@ -114,7 +114,7 @@ void loop()
     drivetrain->Start();
   } else {
     state = 2;
-    drivetrain->Move();
+    drivetrain->Move(left, right);
   }
   delay(100);
 }
