@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "drivetrain.h"
 
-Drivetrain::Drivetrain(const int le, const int lf, const int lb, const int re, const int rf, const int rb) {
+Drivetrain::Drivetrain(int le, int lf, int lb, int re, int rf, int rb) {
   pinMode(lf, OUTPUT);
   pinMode(le, OUTPUT);
   pinMode(lb, OUTPUT);
@@ -19,12 +19,12 @@ void Drivetrain::Start() {
 }
 
 void Drivetrain::Move(int left, int right) {
-  // restrict left and right to -255 to 255
+  //restrict left and right to -255 to 255
   left = ((left < -255) ? -255 : left);
   left = ((left > 255) ? 255 : left);
   right = ((right < -255) ? -255 : right);
   right = ((right > 255) ? 255 : right);
-  // write pins
+  //write pins
   if (left < 0) {
     analogWrite(lb, -left);
     analogWrite(lf, 0);

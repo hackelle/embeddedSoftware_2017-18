@@ -5,7 +5,6 @@
  */
 
 #include <ros.h>
-#include <Fsm.h>
 #include <std_msgs/Empty.h>
 
 #include "geometry_msgs/Twist.h"
@@ -13,19 +12,21 @@
 #include "drivetrain.h"
 
  // max. speed of tracks = 18 cm/s
-double RIGHT_TRACK_MAX_FWRD = 0.18;
-double RIGHT_TRACK_MAX_BACK = 0.18;
-double LEFT_TRACK_MAX_FWRD = 0.18;
-double LEFT_TRACK_MAX_BACK = 0.18;
+double TRACK_SPEED = 0.18;
  // max. rot = 4.5 rad/s => 1.4 sec/rotation
 
 Sensor *sensor = NULL;
 Drivetrain *drivetrain = NULL;
 
+//global variable for left and right drivetrain speed
 int left = 0;
 int right = 0;
 
+//State of the machine
 int state = 0;  // 1->Start; 2->Move; 3->Stop
+double last_sub = 0;
+double sub_timeout = 1000;
+
 // motor
 // left
 int LCHB_100_1REV = 7; // analog
@@ -65,8 +66,15 @@ void blink(){
 }
 
 void calculate_velocities(double x, double yaw){
-  left = (x+0.2827/(4*PI/yaw))*255/0.18;
-  right = (x-0.2827/(4*PI/yaw))*255/0.18;
+  if (x > TRACK_SPEED) {
+    x = TRACK_SPEED;
+  }
+  if (yaw != 0) {
+    left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED;
+    right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED;
+  } else {
+    left = right = x*255/TRACK_SPEED;
+  }
 }
 
 void led_messageCb( const std_msgs::Empty& toggle_msg){
@@ -75,6 +83,7 @@ void led_messageCb( const std_msgs::Empty& toggle_msg){
 
 void twist_messageCb( const geometry_msgs::Twist& twist_msg){
   blink();
+  last_sub = ros::WallTime::now();
   double yaw = twist_msg.angular.z; // rad/s
   double x = twist_msg.linear.x;    //   m/s
   calculate_velocities(x, yaw);
@@ -85,34 +94,36 @@ ros::Subscriber<geometry_msgs::Twist> twist_sub("cmd_vel", twist_messageCb);
 
 void setup()
 {
-  pinMode(13, OUTPUT);
   nh.initNode();
   nh.subscribe(led_sub);
   nh.subscribe(twist_sub);
 
+  //Creating a new instance of sensor and the drivetrain
   sensor = new Sensor(HC_SR04_TRIGGER, HC_SR04_ECHO);
   drivetrain = new Drivetrain(LCHB_100_1EN, LCHB_100_1FWD, LCHB_100_1REV, LCHB_100_2EN, LCHB_100_2FWD, LCHB_100_2REV);
   state = 1;
 
   Serial.begin(9600);
 
+  //Debug LED
   pinMode(YELLOW_LED, OUTPUT);
 }
 
+//Implement protothreading
 void loop()
 {
   nh.spinOnce();
   int distance = sensor->get_distance();
-  if (distance < 40){
+  if (distance < 40 || ros::WallTime::now()-last_sub > sub_timeout) {
     analogWrite(YELLOW_LED, 255);
     state = 3;
     drivetrain->Stop();
-    Serial.println("Safety stop!");
   } else if (distance > 40 && state == 3) {
     analogWrite(YELLOW_LED, 0);
     state = 1;
     drivetrain->Start();
   } else {
+    analogWrite(YELLOW_LED, 0);
     state = 2;
     drivetrain->Move(left, right);
   }
