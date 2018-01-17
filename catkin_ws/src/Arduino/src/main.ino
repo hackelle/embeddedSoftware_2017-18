@@ -24,6 +24,8 @@ int right = 0;
 
 //State of the machine
 int state = 0;  // 1->Start; 2->Move; 3->Stop
+
+//Variables for controlling the timeout behaviour of the subscribed topic
 double last_sub = 0;
 double sub_timeout = 1000;
 
@@ -54,17 +56,6 @@ class NewHardware : public ArduinoHardware {
 };
 ros::NodeHandle_<NewHardware> nh;
 
-void blink(){
-  digitalWrite(YELLOW_LED, HIGH);
-  delay(30);
-  digitalWrite(YELLOW_LED, LOW);
-  delay(30);
-  digitalWrite(YELLOW_LED, HIGH);
-  delay(30);
-  digitalWrite(YELLOW_LED, LOW);
-  delay(30);
-}
-
 void calculate_velocities(double x, double yaw){
   if (x > TRACK_SPEED) {
     x = TRACK_SPEED;
@@ -82,8 +73,7 @@ void led_messageCb( const std_msgs::Empty& toggle_msg){
 }
 
 void twist_messageCb( const geometry_msgs::Twist& twist_msg){
-  blink();
-  last_sub = ros::WallTime::now();
+  last_sub = millis();
   double yaw = twist_msg.angular.z; // rad/s
   double x = twist_msg.linear.x;    //   m/s
   calculate_velocities(x, yaw);
@@ -109,12 +99,11 @@ void setup()
   pinMode(YELLOW_LED, OUTPUT);
 }
 
-//Implement protothreading
 void loop()
 {
   nh.spinOnce();
   int distance = sensor->get_distance();
-  if (distance < 40 || ros::WallTime::now()-last_sub > sub_timeout) {
+  if (distance < 40 || millis()-last_sub > sub_timeout) {
     analogWrite(YELLOW_LED, 255);
     state = 3;
     drivetrain->Stop();
