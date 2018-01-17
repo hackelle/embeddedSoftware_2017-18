@@ -3,16 +3,17 @@
  * Toggles LED on topic toggle_led (for tests).
  * Reads an executes twist_msgs as defined in ros standard.
  */
- 
+
 #include <ros.h>
 #include <std_msgs/Empty.h>
 #include "geometry_msgs/Twist.h"
- 
+
  // max. speed of tracks = 18 cm/s
 double RIGHT_TRACK_MAX_FWRD = 0.18;
 double RIGHT_TRACK_MAX_BACK = 0.18;
 double LEFT_TRACK_MAX_FWRD = 0.18;
-double LEFT_TRACK_MAX_BACK = 0.18;
+double LEFT_TRACK_MA
+X_BACK = 0.18;
  // max. rot = 4.5 rad/s => 1.4 sec/rotation
 
 // motor
@@ -76,12 +77,12 @@ int get_distance(){
   digitalWrite(HC_SR04_TRIGGER, HIGH);
   delay(20);
   digitalWrite(HC_SR04_TRIGGER, LOW);
-  
+
   int duration = pulseIn(HC_SR04_ECHO, HIGH);
   int cm = (duration/2) / 29.1;
-  
+
   //cm = ((cm < 0) ? 0 : cm);
-  
+
   return cm;
 }
 
@@ -128,25 +129,25 @@ void setup()
   nh.initNode();
   nh.subscribe(led_sub);
   nh.subscribe(twist_sub);
-  
+
   // Set motor pin to output.
   pinMode(LCHB_100_1REV, OUTPUT);
   pinMode(LCHB_100_1EN, OUTPUT);
   pinMode(LCHB_100_1FWD, OUTPUT);
-  
+
   pinMode(LCHB_100_2REV, OUTPUT);
   pinMode(LCHB_100_2EN, OUTPUT);
   pinMode(LCHB_100_2FWD, OUTPUT);
-  
+
   // enable both motors
   digitalWrite(LCHB_100_1EN, HIGH);
   digitalWrite(LCHB_100_2EN, HIGH);
-  
+
   pinMode(HC_SR04_TRIGGER, OUTPUT);
   pinMode(HC_SR04_ECHO, INPUT);
-  
+
   Serial.begin(9600);
-  
+
   pinMode(YELLOW_LED, OUTPUT);
 }
 
