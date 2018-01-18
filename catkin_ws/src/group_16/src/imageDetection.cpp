@@ -57,7 +57,7 @@ cv::Mat fourier_transform(cv::Mat src) {
 }
 
 float detect_line(cv::Mat inImage){
-    return 0.3 * detect_line_hough(inImage) + 0.3 * detect_line_linear(inImage) + 0.4 * detect_line_simple(inImage);
+    return 0.3 * detect_line_hough(inImage) + 0.3 * detect_line_linear(inImage) + 0.0 * detect_line_simple(inImage);
 }
 
 float detect_line_hough(cv::Mat inImage){
@@ -76,11 +76,12 @@ float detect_line_hough(cv::Mat inImage){
     // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
     cv::Size size(270, 480);
     cv::resize(inImage, smallMat, size);
-    colorReduce(smallMat);
+    colorReduce(smallMat, 128);
 
 
     // Make grey scale
     cv::cvtColor(smallMat, greyMat, CV_BGR2GRAY);
+    greyMat = greyMat > 128;
 
     // Blur image
     cv::blur(greyMat, blurMat, cv::Size(3, 3));
@@ -126,7 +127,7 @@ float detect_line_hough(cv::Mat inImage){
     // Display images
     cv::imshow("Robot perspective", inImage);
     //cv::imshow("Scaled image", smallMat);
-    cv::imshow("Grey image", croppedMat);
+    cv::imshow("Grey image", greyMat);
     //cv::imshow("Blur image", blurMat);
     cv::imshow("Canny image", cannyMat);
     //cv::imshow("Edge image", edgeMat);
@@ -175,13 +176,13 @@ float detect_line_linear(cv::Mat inImage) {
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
     // Find contours
-    //cv::findContours(perspectiveMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
-    cv::findContours(greyMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    cv::findContours(perspectiveMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    //cv::findContours(greyMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
     // how much of the bottom part of the picture is relevant for our calculation?
-    double relevant_part_y = 0.1;
-    double relevant_part_x_min = 0.35;
-    double relevant_part_x_max = 0.65;
+    double relevant_part_y = 0.05;
+    double relevant_part_x_min = 0.15;
+    double relevant_part_x_max = 0.85;
 
     // calculate approx x
     double av_x = 0;
@@ -196,6 +197,8 @@ float detect_line_linear(cv::Mat inImage) {
             }
         }
     }
+    if (av_x == 0)
+        av_x = perspectiveMat.cols/2;
     if (points != 0)
         av_x /= points;
 
@@ -204,7 +207,7 @@ float detect_line_linear(cv::Mat inImage) {
 
     // calculate the angle of rotation based on the distance
     double distance_to_middle = av_x-perspectiveMat.cols/2;
-    double angle = distance_to_middle *  5/ perspectiveMat.cols;
+    double angle = (distance_to_middle < -20 ? -M_PI/3 : distance_to_middle > 20 ? M_PI/3 : 0);
 
     // Display images
     cv::imshow("Robot perspective", inImage);
@@ -219,12 +222,6 @@ float detect_line_linear(cv::Mat inImage) {
 }
 
 float detect_line_simple(cv::Mat inImage){
-
-    // constants
-    int cannyLowThreshold = 5;
-    int cannyRatio = 3; // recommended 3
-    int cannyKernalSize = 3; // recommended 3
-
     cv::Mat smallMat, greyMat, blurMat, cannyMat, edgeMat,
             perspectiveMat, fourierMat, lineMat;
 
@@ -270,7 +267,7 @@ float detect_line_simple(cv::Mat inImage){
         av_x /= points;
 
     cv::line(perspectiveMat, cv::Point (perspectiveMat.cols/2 ,perspectiveMat.rows-1),
-             cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(255, 0, 0), 3);
+             cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(0, 0, 0), 3);
 
     // calculate the angle of rotation based on the distance
     double distance_to_middle = av_x-perspectiveMat.cols/2;

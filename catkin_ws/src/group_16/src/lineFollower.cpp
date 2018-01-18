@@ -15,10 +15,10 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 #endif // DEBUG_SAVE
 
 
-        float angular_vel_z = detect_line(InImage);
+        float angular_vel_z = detect_line_linear(InImage);
 
         // always go full speed (no robot can go 1m/s)
-        sendMessage(0.1,0,0,
+        sendMessage(0.05,0,0,
                     0,0,angular_vel_z);
 
         // wait a short time for image-display (25 for mobile, 100 for debug)
@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
     image_transport::ImageTransport it(nh);
     sub = it.subscribe("camera/image", 1, imageCallback,
                        ros::VoidPtr(), image_transport::TransportHints("compressed"));
+    std::cout << "Linefollower started" << std::endl;
 
     while (!g_request_shutdown) {
 
