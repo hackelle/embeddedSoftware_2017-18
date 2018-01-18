@@ -30,11 +30,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="lineFollower.cpp" pinned="false" current-in-tab="false">
+      <file leaf-file-name="lineFollower.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/group_16/src/lineFollower.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="374">
-              <caret line="22" column="0" lean-forward="false" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
+            <state relative-caret-position="272">
+              <caret line="16" column="0" lean-forward="true" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
               <folding>
                 <element signature="e#1112#1748#0" expanded="true" />
                 <element signature="e#2746#2838#0" expanded="true" />
@@ -46,18 +46,18 @@
       <file leaf-file-name="imageDetection.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/group_16/src/imageDetection.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="497">
-              <caret line="33" column="49" lean-forward="false" selection-start-line="33" selection-start-column="49" selection-end-line="33" selection-end-column="49" />
+            <state relative-caret-position="157">
+              <caret line="46" column="35" lean-forward="false" selection-start-line="46" selection-start-column="35" selection-end-line="46" selection-end-column="35" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="imageDetection.cpp" pinned="false" current-in-tab="true">
+      <file leaf-file-name="imageDetection.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/group_16/src/imageDetection.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="221">
-              <caret line="218" column="1" lean-forward="false" selection-start-line="218" selection-start-column="1" selection-end-line="218" selection-end-column="1" />
+            <state relative-caret-position="4">
+              <caret line="119" column="5" lean-forward="true" selection-start-line="119" selection-start-column="5" selection-end-line="119" selection-end-column="5" />
               <folding />
             </state>
           </provider>
@@ -73,10 +73,10 @@
         <option value="$PROJECT_DIR$/src/group_16/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/src/group_16/src/lineDetectionIdeas.txt" />
         <option value="$PROJECT_DIR$/src/group_16/src/lineDetectionIdeas.md" />
-        <option value="$PROJECT_DIR$/src/group_16/src/imageDetection.h" />
         <option value="$PROJECT_DIR$/src/group_16/src/lineFollower.h" />
-        <option value="$PROJECT_DIR$/src/group_16/src/lineFollower.cpp" />
+        <option value="$PROJECT_DIR$/src/group_16/src/imageDetection.h" />
         <option value="$PROJECT_DIR$/src/group_16/src/imageDetection.cpp" />
+        <option value="$PROJECT_DIR$/src/group_16/src/lineFollower.cpp" />
       </list>
     </option>
   </component>
@@ -183,12 +183,12 @@
       <workItem from="1515708332778" duration="74000" />
       <workItem from="1515708622808" duration="7554000" />
       <workItem from="1515941666769" duration="123000" />
-      <workItem from="1516262058348" duration="8619000" />
+      <workItem from="1516262058348" duration="9663000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="68069000" />
+    <option name="totallyTimeSpent" value="69113000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="106" width="1303" height="780" extended-state="6" />
@@ -574,14 +574,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/group_16/src/imageDetection.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="497">
-          <caret line="33" column="49" lean-forward="false" selection-start-line="33" selection-start-column="49" selection-end-line="33" selection-end-column="49" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/group_16/src/lineFollower.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="259">
@@ -590,22 +582,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/group_16/src/lineFollower.cpp">
+    <entry file="file://$PROJECT_DIR$/src/group_16/src/imageDetection.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="22" column="0" lean-forward="false" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
-          <folding>
-            <element signature="e#1112#1748#0" expanded="true" />
-            <element signature="e#2746#2838#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="157">
+          <caret line="46" column="35" lean-forward="false" selection-start-line="46" selection-start-column="35" selection-end-line="46" selection-end-column="35" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/group_16/src/imageDetection.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="218" column="1" lean-forward="false" selection-start-line="218" selection-start-column="1" selection-end-line="218" selection-end-column="1" />
+        <state relative-caret-position="4">
+          <caret line="119" column="5" lean-forward="true" selection-start-line="119" selection-start-column="5" selection-end-line="119" selection-end-column="5" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/group_16/src/lineFollower.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="272">
+          <caret line="16" column="0" lean-forward="true" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
+          <folding>
+            <element signature="e#1112#1748#0" expanded="true" />
+            <element signature="e#2746#2838#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

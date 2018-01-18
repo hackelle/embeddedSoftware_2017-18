@@ -57,7 +57,7 @@ cv::Mat fourier_transform(cv::Mat src) {
 }
 
 float detect_line(cv::Mat inImage){
-    return 0.3 * detect_line_hough(inImage) + 0.7 * detect_line_linear(inImage);
+    return 0.3 * detect_line_hough(inImage) + 0.3 * detect_line_linear(inImage) + 0.4 * detect_line_simple(inImage);
 }
 
 float detect_line_hough(cv::Mat inImage){
@@ -213,6 +213,73 @@ float detect_line_linear(cv::Mat inImage) {
     //cv::imshow("Blur image", blurMat);
     cv::imshow("Canny image", cannyMat);
     //cv::imshow("Edge image", edgeMat);
+    cv::imshow("Perspective image", perspectiveMat);
+
+    return angle;
+}
+
+float detect_line_simple(cv::Mat inImage){
+
+    // constants
+    int cannyLowThreshold = 5;
+    int cannyRatio = 3; // recommended 3
+    int cannyKernalSize = 3; // recommended 3
+
+    cv::Mat smallMat, greyMat, blurMat, cannyMat, edgeMat,
+            perspectiveMat, fourierMat, lineMat;
+
+    // Transpose and flip to get portrait mode
+    cv::transpose(inImage, inImage);
+    cv::flip(inImage, inImage, 1);
+
+    // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
+    cv::Size size(270, 480);
+    cv::resize(inImage, smallMat, size);
+    colorReduce(smallMat, 128);
+
+
+    // Make grey scale
+    cv::cvtColor(smallMat, greyMat, CV_BGR2GRAY);
+    greyMat = greyMat > 128;
+
+    // transform with perspective
+    perspectiveTransformForRobot(greyMat, perspectiveMat);
+
+    // how much of the bottom part of the picture is relevant for our calculation?
+    double relevant_part_y = 0.1;
+    double relevant_part_x_min = 0.35;
+    double relevant_part_x_max = 0.65;
+
+    // calculate approx x
+    double av_x = 0;
+    int points = 0;
+    for (int i = 0; i < perspectiveMat.cols; i++){
+        for (int j = 0; j < perspectiveMat.rows; j++){
+            cv::Vec3b p = perspectiveMat.at<cv::Vec3b>(i,j);
+            if (i < perspectiveMat.cols * (1-relevant_part_y) &&
+                j > perspectiveMat.cols * relevant_part_x_min &&
+                j < perspectiveMat.cols * relevant_part_x_max){
+                if (p[0] + p[1] + p[2] == 0){
+                    av_x += i;
+                    points++;
+                }
+            }
+        }
+    }
+    if (points != 0)
+        av_x /= points;
+
+    cv::line(perspectiveMat, cv::Point (perspectiveMat.cols/2 ,perspectiveMat.rows-1),
+             cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(255, 0, 0), 3);
+
+    // calculate the angle of rotation based on the distance
+    double distance_to_middle = av_x-perspectiveMat.cols/2;
+    double angle = distance_to_middle *  5/ perspectiveMat.cols;
+
+    // Display images
+    cv::imshow("Robot perspective", inImage);
+    //cv::imshow("Scaled image", smallMat);
+    cv::imshow("Grey image", greyMat);
     cv::imshow("Perspective image", perspectiveMat);
 
     return angle;

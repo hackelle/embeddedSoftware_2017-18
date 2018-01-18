@@ -55,6 +55,7 @@ float detect_line_hough(cv::Mat inImage);
  * @return float of best angular velocity fitting in between the line edges
  */
 float detect_line_linear(cv::Mat inImage);
+float detect_line_simple(cv::Mat inImage);
 
 /**
  * Reduces the color depth of an image
