@@ -76,7 +76,7 @@ float detect_line_hough(cv::Mat inImage){
     // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
     cv::Size size(270, 480);
     cv::resize(inImage, smallMat, size);
-    colorReduce(smallMat, 8);
+    colorReduce(smallMat);
 
 
     // Make grey scale
@@ -94,38 +94,39 @@ float detect_line_hough(cv::Mat inImage){
 
     // transform with perspective (canny and color for lines later)
     perspectiveTransformForRobot(cannyMat, perspectiveMat);
-    smallMat.copyTo(lineMat);
-    perspectiveTransformForRobot(lineMat, lineMat);
 
-    // crop the image, discard first x cols pixel
-    // FIXME: Why does this work?
     cv::Mat croppedMat = perspectiveMat.clone();
-    for (int j = 0; j < croppedMat.rows; ++j) {
-        for (int i = 0; i < croppedMat.cols; ++i) {
-            croppedMat.at<cv::Vec3b>(i,j)[0] = 0;
-            croppedMat.at<cv::Vec3b>(i,j)[1] = 0;
-            croppedMat.at<cv::Vec3b>(i,j)[2] = 0;
-        }
-    }
+
+    // startX, startY, width, height
+    int startY = croppedMat.rows*3/4;
+    cv::Rect myROI(0, startY, croppedMat.cols, croppedMat.rows - startY);
+
+    // Crop the full image to that image contained by the rectangle myROI
+    // Note that this doesn't copy the data
+    croppedMat = croppedMat(myROI);
+    croppedMat.copyTo(lineMat);
 
     // detect lines in hough and draw lines in picture
     std::vector<cv::Vec4i> lines;
-    int overlap = 30;
-    cv::HoughLinesP(croppedMat, lines, 1, CV_PI/180, overlap, 100, 40);
+    int overlap = 50;
+    cv::HoughLinesP(croppedMat, lines, 1, CV_PI/180, overlap, 50, 40);
     // draw lines, get average angle
     double angle = 0;
     for( size_t i = 0; i < lines.size(); i++ )
     {
         cv::Vec4i l = lines[i];
-        cv::line( lineMat, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
-        angle += atan2(l[1] - l[3], l[0] - l[2]);
+        cv::line( lineMat, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255,255,255), 3, CV_AA);
+        angle += atan2(l[1] - l[3], l[0] - l[2]) - M_PI/2;
     }
-    angle /= lines.size();
+    if (lines.size()!=0)
+        angle /= lines.size();
+
+    angle = fmod(angle,M_PI);
 
     // Display images
     cv::imshow("Robot perspective", inImage);
     //cv::imshow("Scaled image", smallMat);
-    cv::imshow("Grey image", greyMat);
+    cv::imshow("Grey image", croppedMat);
     //cv::imshow("Blur image", blurMat);
     cv::imshow("Canny image", cannyMat);
     //cv::imshow("Edge image", edgeMat);
@@ -150,11 +151,12 @@ float detect_line_linear(cv::Mat inImage) {
     // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
     cv::Size size(270, 480);
     cv::resize(inImage, smallMat, size);
-    colorReduce(smallMat, 8);
+    colorReduce(smallMat, 128);
 
 
     // Make grey scale
     cv::cvtColor(smallMat, greyMat, CV_BGR2GRAY);
+    greyMat = greyMat > 128;
 
     // Blur image
     cv::blur(greyMat, blurMat, cv::Size(3, 3));
@@ -173,29 +175,36 @@ float detect_line_linear(cv::Mat inImage) {
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
     // Find contours
-    cv::findContours(perspectiveMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    //cv::findContours(perspectiveMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    cv::findContours(greyMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
     // how much of the bottom part of the picture is relevant for our calculation?
-    double relevant_part = 0.2;
+    double relevant_part_y = 0.1;
+    double relevant_part_x_min = 0.35;
+    double relevant_part_x_max = 0.65;
 
     // calculate approx x
     double av_x = 0;
     int points = 0;
     for (auto & c : contours){
         for (auto & p: c){
-            if (p.y < perspectiveMat.cols * (1-relevant_part)){
+            if (p.y < perspectiveMat.cols * (1-relevant_part_y) &&
+                    p.x > perspectiveMat.cols * relevant_part_x_min &&
+                    p.x < perspectiveMat.cols * relevant_part_x_max){
                 av_x += p.x;
                 points++;
             }
         }
     }
-    av_x /= points;
+    if (points != 0)
+        av_x /= points;
+
     cv::line(perspectiveMat, cv::Point (perspectiveMat.cols/2 ,perspectiveMat.rows-1),
                 cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(255, 0, 0), 3);
 
     // calculate the angle of rotation based on the distance
     double distance_to_middle = av_x-perspectiveMat.cols/2;
-    double angle = distance_to_middle *  3.14159265/ perspectiveMat.cols;
+    double angle = distance_to_middle *  5/ perspectiveMat.cols;
 
     // Display images
     cv::imshow("Robot perspective", inImage);
