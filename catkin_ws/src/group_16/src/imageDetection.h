@@ -28,6 +28,21 @@
 cv::Mat fourier_transform(cv::Mat src);
 
 /**
+ * Rotates, reduces size and makes image black and white
+ * @param inImage Image to work on
+ * @param threshold [optional] threshold for black value, standard = 128
+ * @return a black and white image, 90° rotated, 270*480
+ */
+cv::Mat prepare_image(cv::Mat inImage, int threshold = 128);
+
+/**
+ * Reduces the color depth of an image
+ * @param image the in and output cv::Mat. Runs inplace for performance
+ * @param div [optional] the new color depth, standard = 128 (means 2 colors per channel)
+ */
+void colorReduce(cv::Mat& image, int div = 128);
+
+/**
  * Use hough transform and linear approximation to find a line
  *
  * @param inImage cv::Mat matrix of picture to find line curvature in
@@ -56,14 +71,6 @@ float detect_line_hough(cv::Mat inImage);
  */
 float detect_line_linear(cv::Mat inImage);
 float detect_line_simple(cv::Mat inImage);
-
-/**
- * Reduces the color depth of an image
- * @param image the in and output cv::Mat. Runs inplace for performance
- * @param div [optional] the new color depth, standard = 64
- */
-void colorReduce(cv::Mat& image, int div);
-void colorReduce(cv::Mat& image);
 
 /**
  * Creates and returns a random alpha numeric string
