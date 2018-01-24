@@ -1,7 +1,7 @@
 #include "lineFollower.h"
 
 //#define DEBUG_SAVE
-//#define DEBUG_LOAD
+#define DEBUG_LOAD
 
 // show the picture
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
