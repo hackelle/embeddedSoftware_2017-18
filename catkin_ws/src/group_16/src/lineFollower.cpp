@@ -7,7 +7,7 @@
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
     try {
         // use the bridge to convert msg image to a matrix
-        cv::Mat InImage = cv_bridge::toCvShare(msg, "bgr8")->image;
+        cv::Mat inImage = cv_bridge::toCvShare(msg, "bgr8")->image;
 
         // save if debugging-saving
 #ifdef DEBUG_SAVE
@@ -15,14 +15,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 #endif // DEBUG_SAVE
 
 
-        float angular_vel_z = detect_line(InImage);
+        float angular_vel_z = detect_line_simple(inImage);
 
         // always go full speed (no robot can go 1m/s)
-        sendMessage(0.1,0,0,
+        sendMessage(0.05,0,0,
                     0,0,angular_vel_z);
 
         // wait a short time for image-display (25 for mobile, 100 for debug)
-        cv::waitKey(25);
+        cv::waitKey(500);
     }
     catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'jpg'.", msg->encoding.c_str());
@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
     image_transport::ImageTransport it(nh);
     sub = it.subscribe("camera/image", 1, imageCallback,
                        ros::VoidPtr(), image_transport::TransportHints("compressed"));
+    std::cout << "Linefollower started" << std::endl;
 
     while (!g_request_shutdown) {
 
@@ -80,6 +81,7 @@ int main(int argc, char **argv) {
 
 #ifdef DEBUG_LOAD
         // send the saved&reloaded image to trigger the callback
+        std::cout << "Fake sending image" << std::endl;
         debug_pub.publish(img_msg);
 #endif // DEBUG_LOAD
 

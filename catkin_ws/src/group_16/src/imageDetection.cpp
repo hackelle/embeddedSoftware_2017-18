@@ -56,8 +56,26 @@ cv::Mat fourier_transform(cv::Mat src) {
     return magI; // return the result
 }
 
+cv::Mat prepare_image(cv::Mat inImage, int threshold /*= 128*/){
+    cv::Mat smallMat, greyMat;
+
+    cv::transpose(inImage, inImage);
+    cv::flip(inImage, inImage, 1);
+
+    cv::Size size(270, 480);
+
+    cv::resize(inImage, smallMat, size);
+    colorReduce(smallMat);
+
+    // Make grey scale
+    cv::cvtColor(smallMat, greyMat, CV_BGR2GRAY);
+    greyMat = greyMat > threshold;
+
+    return greyMat;
+}
+
 float detect_line(cv::Mat inImage){
-    return 0.3 * detect_line_hough(inImage) + 0.7 * detect_line_linear(inImage);
+    return 0.3 * detect_line_hough(inImage) + 0.3 * detect_line_linear(inImage) + 0.0 * detect_line_simple(inImage);
 }
 
 float detect_line_hough(cv::Mat inImage){
@@ -66,69 +84,53 @@ float detect_line_hough(cv::Mat inImage){
     int cannyRatio = 3; // recommended 3
     int cannyKernalSize = 3; // recommended 3
 
-    cv::Mat smallMat, greyMat, blurMat, cannyMat, edgeMat,
-            perspectiveMat, fourierMat, lineMat;
+    cv::Mat greyMat, cannyMat, lineMat, perspectiveMat, croppedMat;
 
-    // Transpose and flip to get portrait mode
-    cv::transpose(inImage, inImage);
-    cv::flip(inImage, inImage, 1);
-
-    // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
-    cv::Size size(270, 480);
-    cv::resize(inImage, smallMat, size);
-    colorReduce(smallMat, 8);
-
-
-    // Make grey scale
-    cv::cvtColor(smallMat, greyMat, CV_BGR2GRAY);
+    greyMat = prepare_image(inImage);
 
     // Blur image
-    cv::blur(greyMat, blurMat, cv::Size(3, 3));
+    cv::blur(greyMat, cannyMat, cv::Size(3, 3));
 
     // Detect edges with Canny
-    cv::Canny(blurMat, cannyMat, cannyLowThreshold, cannyLowThreshold * cannyRatio, cannyKernalSize);
-
-    // Make picture of only colorful edges on black background
-    edgeMat = cv::Scalar::all(0);
-    smallMat.copyTo(edgeMat, cannyMat);
+    cv::Canny(cannyMat, cannyMat, cannyLowThreshold, cannyLowThreshold * cannyRatio, cannyKernalSize);
 
     // transform with perspective (canny and color for lines later)
     perspectiveTransformForRobot(cannyMat, perspectiveMat);
-    smallMat.copyTo(lineMat);
-    perspectiveTransformForRobot(lineMat, lineMat);
 
-    // crop the image, discard first x cols pixel
-    // FIXME: Why does this work?
-    cv::Mat croppedMat = perspectiveMat.clone();
-    for (int j = 0; j < croppedMat.rows; ++j) {
-        for (int i = 0; i < croppedMat.cols; ++i) {
-            croppedMat.at<cv::Vec3b>(i,j)[0] = 0;
-            croppedMat.at<cv::Vec3b>(i,j)[1] = 0;
-            croppedMat.at<cv::Vec3b>(i,j)[2] = 0;
-        }
-    }
+    croppedMat = perspectiveMat.clone();
+
+    // startX, startY, width, height
+    int startY = croppedMat.rows*3/4;
+    cv::Rect myROI(0, startY, croppedMat.cols, croppedMat.rows - startY);
+
+    // Crop the full image to that image contained by the rectangle myROI
+    // Note that this doesn't copy the data
+    croppedMat = croppedMat(myROI);
+    croppedMat.copyTo(lineMat);
 
     // detect lines in hough and draw lines in picture
     std::vector<cv::Vec4i> lines;
-    int overlap = 30;
-    cv::HoughLinesP(croppedMat, lines, 1, CV_PI/180, overlap, 100, 40);
+    int overlap = 50;
+    cv::HoughLinesP(croppedMat, lines, 1, CV_PI/180, overlap, 50, 40);
     // draw lines, get average angle
     double angle = 0;
     for( size_t i = 0; i < lines.size(); i++ )
     {
         cv::Vec4i l = lines[i];
-        cv::line( lineMat, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, CV_AA);
-        angle += atan2(l[1] - l[3], l[0] - l[2]);
+        cv::line( lineMat, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255,255,255), 3, CV_AA);
+        angle += atan2(l[1] - l[3], l[0] - l[2]) - M_PI/2;
     }
-    angle /= lines.size();
+    if (lines.size()!=0)
+        angle /= lines.size();
+
+    angle = fmod(angle,M_PI);
 
     // Display images
     cv::imshow("Robot perspective", inImage);
-    //cv::imshow("Scaled image", smallMat);
     cv::imshow("Grey image", greyMat);
-    //cv::imshow("Blur image", blurMat);
+
     cv::imshow("Canny image", cannyMat);
-    //cv::imshow("Edge image", edgeMat);
+
     cv::imshow("Perspective image", perspectiveMat);
     cv::imshow("Line image", lineMat);
     return angle;
@@ -140,32 +142,15 @@ float detect_line_linear(cv::Mat inImage) {
     int cannyRatio = 3; // recommended 3
     int cannyKernalSize = 3; // recommended 3
 
-    cv::Mat smallMat, greyMat, blurMat, cannyMat, edgeMat,
-            perspectiveMat, fourierMat, lineMat;
+    cv::Mat greyMat, cannyMat, perspectiveMat;
 
-    // Transpose and flip to get portrait mode
-    cv::transpose(inImage, inImage);
-    cv::flip(inImage, inImage, 1);
-
-    // Scale down image to 270*480 pixel (1/16 of 1080*1920) and reduce color depth
-    cv::Size size(270, 480);
-    cv::resize(inImage, smallMat, size);
-    colorReduce(smallMat, 8);
-
-
-    // Make grey scale
-    cv::cvtColor(smallMat, greyMat, CV_BGR2GRAY);
+    greyMat = prepare_image(inImage);
 
     // Blur image
-    cv::blur(greyMat, blurMat, cv::Size(3, 3));
+    cv::blur(greyMat, cannyMat, cv::Size(3, 3));
 
     // Detect edges with Canny
-    cv::Canny(blurMat, cannyMat, cannyLowThreshold, cannyLowThreshold * cannyRatio, cannyKernalSize);
-
-    // Make picture of only colorful edges on black background
-    // (copy everything from small in edge, where canny is not black)
-    edgeMat = cv::Scalar::all(0);
-    smallMat.copyTo(edgeMat, cannyMat);
+    cv::Canny(cannyMat, cannyMat, cannyLowThreshold, cannyLowThreshold * cannyRatio, cannyKernalSize);
 
     // transform with perspective
     perspectiveTransformForRobot(cannyMat, perspectiveMat);
@@ -174,46 +159,118 @@ float detect_line_linear(cv::Mat inImage) {
     std::vector<cv::Vec4i> hierarchy;
     // Find contours
     cv::findContours(perspectiveMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    //cv::findContours(greyMat, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
     // how much of the bottom part of the picture is relevant for our calculation?
-    double relevant_part = 0.2;
+    double relevant_part_y = 0.05;
+    double relevant_part_x_min = 0.15;
+    double relevant_part_x_max = 0.85;
 
     // calculate approx x
     double av_x = 0;
     int points = 0;
     for (auto & c : contours){
         for (auto & p: c){
-            if (p.y < perspectiveMat.cols * (1-relevant_part)){
+            if (p.y < perspectiveMat.cols * (1-relevant_part_y) &&
+                    p.x > perspectiveMat.cols * relevant_part_x_min &&
+                    p.x < perspectiveMat.cols * relevant_part_x_max){
                 av_x += p.x;
                 points++;
             }
         }
     }
-    av_x /= points;
+    if (av_x == 0)
+        av_x = perspectiveMat.cols/2;
+    if (points != 0)
+        av_x /= points;
+
     cv::line(perspectiveMat, cv::Point (perspectiveMat.cols/2 ,perspectiveMat.rows-1),
                 cv::Point(av_x, perspectiveMat.rows-100), cv::Scalar(255, 0, 0), 3);
 
     // calculate the angle of rotation based on the distance
     double distance_to_middle = av_x-perspectiveMat.cols/2;
-    double angle = distance_to_middle *  3.14159265/ perspectiveMat.cols;
+    double angle = (distance_to_middle < -20 ? -M_PI/3 : distance_to_middle > 20 ? M_PI/3 : 0);
 
     // Display images
     cv::imshow("Robot perspective", inImage);
-    //cv::imshow("Scaled image", smallMat);
     cv::imshow("Grey image", greyMat);
-    //cv::imshow("Blur image", blurMat);
+
     cv::imshow("Canny image", cannyMat);
-    //cv::imshow("Edge image", edgeMat);
+
     cv::imshow("Perspective image", perspectiveMat);
 
     return angle;
 }
 
-void colorReduce(cv::Mat &image) {
-    colorReduce(image, 64);
+float detect_line_simple(cv::Mat inImage){
+    cv::Mat greyMat, perspectiveMat;
+
+    greyMat = prepare_image(inImage);
+
+    // transform with perspective
+    perspectiveTransformForRobot(greyMat, perspectiveMat);
+    perspectiveMat = greyMat;
+
+    // how much of the bottom part of the picture is relevant for our calculation?
+    double relevant_part_y = 0.1;
+    double relevant_part_x_min = 0.1;
+    double relevant_part_x_max = 0.9;
+
+    cv::Mat debugMat(greyMat.size(), CV_8U, 255);
+
+    // calculate approx x of each col
+    double av_x[480];
+    for (int i = 0; i < debugMat.rows; i++){
+        double this_av = 0;
+        int points = 0;
+        for (int j = 0; j < debugMat.cols; j++){
+            u_char p = greyMat.at<u_char>(i,j);
+            if (p == 0){
+                // if its a black pixel, add to average
+                this_av += j;
+                points++;
+
+                debugMat.at<u_char>(cv::Point(j,i)) = 127;
+            }
+        }
+        if (points != 0){
+            av_x[i] = (int)(this_av/points);
+            std::cout << "(" << i << "|" << av_x[i] << ") @ " << points << std::endl;
+        } else {
+            std::cout << "no data" << std::endl;
+            av_x[i] = greyMat.cols/2;
+        }
+    }
+
+    std::vector<cv::Point> points;
+    for (int i = 0; i < greyMat.rows; ++i) {
+        points.push_back(cv::Point((int)av_x[i], i));
+    }
+
+    cv::Mat reduced_lines = greyMat.clone();
+
+    // set only average points to black
+    for(auto &point: points){
+        reduced_lines.at<u_char>(point) = 127;
+    }
+
+    //cv::line(greyMat, cv::Point (greyMat.cols/2 ,greyMat.rows-1),
+    //         cv::Point(av_x, greyMat.rows-100), cv::Scalar(0, 0, 0), 3);
+
+    // calculate the angle of rotation based on the distance
+    double angle = 0;
+
+    // Display images
+    cv::imshow("Robot perspective", inImage);
+    cv::imshow("Grey image", greyMat);
+    cv::imshow("Perspective image", perspectiveMat);
+    cv::imshow("Line image", reduced_lines);
+    cv::imshow("Canny image", debugMat);
+
+    return angle;
 }
 
-void colorReduce(cv::Mat &image, int div) {
+void colorReduce(cv::Mat &image, int div /*= 128*/) {
     int nl = image.rows;                    // number of lines
     int nc = image.cols * image.channels(); // number of elements per line
 
@@ -264,11 +321,6 @@ void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst) {
     srcQuad[1] = Point2f(src.cols -1, 0);
     srcQuad[2] = Point2f(src.cols + col_offset, src.rows-1);
     srcQuad[3] = Point2f(-col_offset, src.rows-1);
-    /*
-    srcQuad[0] = Point2f(-30, -60);
-    srcQuad[1] = Point2f(src.cols + 50, -50);
-    srcQuad[2] = Point2f(src.cols + 100, src.rows + 50);
-    srcQuad[3] = Point2f(-50, src.rows + 50);*/
 
     // "Source points"
     // The 4 points where the mapping is to be done , from top-left in clockwise order
