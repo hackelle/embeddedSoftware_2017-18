@@ -3,6 +3,31 @@
 //
 
 #include "imageDetection.h"
+class Point{
+public:
+    double x;
+    double y;
+
+    Point(){
+        this->x = 0;
+        this->y = 0;
+    };
+
+    Point(double x, double y){
+        this->x = x;
+        this->y = y;
+    }
+
+    double distance(Point p){
+        return sqrt(pow(this->x-p.x, 2) + pow(this->y-p.y, 2));
+    }
+
+    std::string toString(){
+        std::stringstream ss;
+        ss << "(" << this->x << ", " << this->y << ") ";
+        return ss.str();
+    }
+};
 
 cv::Mat fourier_transform(cv::Mat src) {
     using namespace cv;
@@ -212,62 +237,86 @@ float detect_line_simple(cv::Mat inImage){
     perspectiveMat = greyMat;
 
     // how much of the bottom part of the picture is relevant for our calculation?
-    double relevant_part_y = 0.1;
+    double relevant_part_y = 0.3;
     double relevant_part_x_min = 0.1;
     double relevant_part_x_max = 0.9;
 
     cv::Mat debugMat(greyMat.size(), CV_8U, 255);
 
     // calculate approx x of each col
-    double av_x[480];
-    for (int i = 0; i < debugMat.rows; i++){
+    std::vector<cv::Point> av_points;
+
+    for (int i = (1-relevant_part_y) * perspectiveMat.rows; i < perspectiveMat.rows; i++){
         double this_av = 0;
         int points = 0;
-        for (int j = 0; j < debugMat.cols; j++){
-            u_char p = greyMat.at<u_char>(i,j);
+        for (int j = 0; j < perspectiveMat.cols; j++){
+            u_char p = perspectiveMat.at<u_char>(i,j);
             if (p == 0){
                 // if its a black pixel, add to average
                 this_av += j;
                 points++;
 
-                debugMat.at<u_char>(cv::Point(j,i)) = 127;
+                // draw relevent part in debugMat
+                debugMat.at<u_char>(cv::Point(j,i - (1-relevant_part_y) * perspectiveMat.rows)) = 180;
             }
         }
         if (points != 0){
-            av_x[i] = (int)(this_av/points);
-            std::cout << "(" << i << "|" << av_x[i] << ") @ " << points << std::endl;
+            // store average in points
+            int av_x = (int)(this_av/points);
+            av_points.push_back(cv::Point(av_x, i));
         } else {
-            std::cout << "no data" << std::endl;
-            av_x[i] = greyMat.cols/2;
+            int av_x = greyMat.cols/2;
+            av_points.push_back(cv::Point(av_x, i));
         }
     }
 
-    std::vector<cv::Point> points;
-    for (int i = 0; i < greyMat.rows; ++i) {
-        points.push_back(cv::Point((int)av_x[i], i));
+    cv::Mat reduced_lines = perspectiveMat.clone();
+
+    double av_x = 0;
+    // set only average points to dark
+    for(auto &point: av_points){
+        reduced_lines.at<u_char>(point) = 170;
+        // add offset to draw to top part of matrix
+        debugMat.at<u_char>(cv::Point(point.x ,point.y - (1-relevant_part_y) * perspectiveMat.rows)) = 127;
+        av_x += point.x;
     }
+    av_x /= av_points.size();
+    av_x = (av_x == greyMat.cols/2) ? greyMat.cols/2 + 1 : av_x;
 
-    cv::Mat reduced_lines = greyMat.clone();
-
-    // set only average points to black
-    for(auto &point: points){
-        reduced_lines.at<u_char>(point) = 127;
-    }
-
-    //cv::line(greyMat, cv::Point (greyMat.cols/2 ,greyMat.rows-1),
-    //         cv::Point(av_x, greyMat.rows-100), cv::Scalar(0, 0, 0), 3);
 
     // calculate the angle of rotation based on the distance
-    double angle = 0;
+    double *angle = new double(0);
+    double *speed = new double(151); // 11cm/s; 1px ~ .73mm, 1mm ~ 1.37 px
+    int offset = 212; // (in pixel); 212 ~ 15.5cm, 110 ~ 8cm
+
+    Point robot = Point(135, offset + relevant_part_y * perspectiveMat.rows); // center of robot
+    Point goal = Point(av_x, relevant_part_y/2 * perspectiveMat.rows); // goal I want to drive to
+    double center_x = (pow(av_x, 2) + pow(robot.y - goal.y, 2) - pow(135,2))/(2*av_x-2*135);
+    Point center_circ = Point(center_x, robot.y); // center of driving circle
+
+    //fit_lines(av_points, speed, angle, offset);
+    // angle = speed / radius
+    *angle = *speed / center_circ.distance(robot);
+    std::cout << av_x-135 << std::endl;
+    std::cout << *angle << std::endl;
+
+    if (av_x != greyMat.cols/2)
+        cv::circle(debugMat, cv::Point(center_circ.x, center_circ.y), center_circ.distance(robot), 191);
+    else
+        cv::circle(debugMat, cv::Point(center_circ.x, center_circ.y), 1e6, 191);
+
+    // draw center of robot
+    debugMat.at<u_char>(cv::Point(robot.x ,robot.y)) = 0;
+    debugMat.at<u_char>(cv::Point(goal.x ,goal.y)) = 0;
 
     // Display images
     cv::imshow("Robot perspective", inImage);
     cv::imshow("Grey image", greyMat);
     cv::imshow("Perspective image", perspectiveMat);
     cv::imshow("Line image", reduced_lines);
-    cv::imshow("Canny image", debugMat);
+    cv::imshow("Debug image", debugMat);
 
-    return angle;
+    return *angle;
 }
 
 void colorReduce(cv::Mat &image, int div /*= 128*/) {
@@ -336,44 +385,59 @@ void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst) {
     warpPerspective(src, dst, lambda, dst.size());
 }
 
-void fit_lines(cv::Mat &perspectiveMat, double &smallest_distance_speed, double &smallest_distance_ang,
-               double &smallest_distance_radius, double* distances, int y_pixel_offset){
+void fit_lines(std::vector<cv::Point> points, double *speed, double *angle, int offset){
+    using namespace std;
 
+
+    int coord_offset = offset; // x pixel "below" seeable pixels
+
+    std::vector<Point> points_cm;
+    for(auto &point: points){
+        // correct pixel to cm
+        // 1 pixel ~ 1mm
+        Point p;
+        p.y = abs(point.y-479);
+        p.y += offset;  // add pixel offset
+        p.y *= .001;
+        p.x = point.x-135;
+        p.x *= .001;
+
+        points_cm.push_back(p);
+        cout << p.toString() << endl;
+    }
+
+    //points_cm.push_back(Point(0.28, 0.22));
     double smallest_distance = HUGE_VAL;
-    double PI = 3.14159265358;
-    int counter = 0;
 
-    for (double i = 0.07; i < 0.18; i+=0.02) {
-        // try for linear speeds 7,9,11,13,15,17 [cm]
-        for (double j = -4.0/8*PI; j < 5.0/8*PI; j+=1.0/8*PI){
+    for (double i = 0.11; i < 0.13; i+=0.02) {
+        // try for linear speeds (7,9,11,13,15,)17 [cm]
+        for (double j = -8.0/16*M_PI; j < 9.0/16*M_PI; j+=1.0/16*M_PI){
             // try for angular speeds -4/8 pi .. 4/8 pi in 1/8 pi steps (-90° to +90°)
-            double angular_z = 0.0001;
+            double angular_z = 1e-9;
             if (j != 0) angular_z = j;
             double linear_x = i;
 
-            // calculate radius of the circle
-            double radius = linear_x * (2*PI/angular_z) * y_pixel_offset;
+            // calculate radius of the circle (center is at (0|r) )
+            double radius = linear_x / angular_z;
+            double distance_squared = 0;
+            for (auto point: points_cm){
+                // d = |sqrt((x-0)² + (y-y_0)²) - r|  distance to circle with center (x_0,y_0) and radius r
+                // here y_0 = radius and x_0 = 0
+                Point center = Point(radius, 0);
 
-            // calculate distance of each point to this circle
-            std::vector<cv::Point> locations;   // output, locations of non-zero (=white) pixels
-            cv::findNonZero(perspectiveMat, locations);
-            // access pixel coordinates
-            // add all distances (weighted by distance to lower end of picture)
-            distances[counter] = 0;
-            for (auto & loc :locations){
-                distances[counter] += abs(sqrt(pow(loc.x,2) + pow(loc.y,2)) - radius)
-                                      * ((float)loc.y/perspectiveMat.cols);
+                double dist = pow(abs(point.distance(center) - abs(radius)), 1);
+                distance_squared += dist;
             }
 
-            if (distances[counter] < smallest_distance){
-                smallest_distance_speed = linear_x;
-                smallest_distance_ang = angular_z;
-                smallest_distance_radius = radius;
-                smallest_distance = distances[counter];
-                std::cout << "New smallest distance = " <<  smallest_distance << " @ (" <<
-                          smallest_distance_speed << "|" << smallest_distance_ang << ")" << std::endl;
+            cout << "r=" << radius << " d²=" << distance_squared << " (" << linear_x << "|" << angular_z << ")" << endl;
+            if (distance_squared <= smallest_distance){
+                *speed = linear_x;
+                *angle = angular_z;
+
+                smallest_distance = distance_squared;
+                std::cout << "New smallest distance = " <<  smallest_distance << std::endl;
+                cout << "Center = " << Point(radius,0).toString() << endl << endl;
             }
-            counter++;
         }
     }
 }

@@ -40,7 +40,7 @@ sig_atomic_t volatile g_request_shutdown = 0;
 ros::Publisher twist_pub;
 
 // path of debug image
-std::string image_path  = "debug_image_1.jpg";
+std::string image_path  = "debug_image_6.jpg";
 
 void imageCallback(const sensor_msgs::ImageConstPtr &msg);
 void SigIntHandler(int sig);
