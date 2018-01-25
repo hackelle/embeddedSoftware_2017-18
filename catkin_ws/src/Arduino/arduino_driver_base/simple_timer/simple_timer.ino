@@ -10,13 +10,17 @@
 
  // max. speed of tracks = 18 cm/s
 double TRACK_SPEED = 0.18;
+double current_speed = 0;
+double speed_adjust = 0;
+double distance_adjust = 0;
 
  //global variable for left and right drivetrain speed
  int left = 0;
  int right = 0;
 
  //State of the machine
- int state = 0;  // 1->Start; 2->Move; 3->Stop
+ int state = 3;  // 1->Start; 2->Move; 3->Stop; 4->Follow
+ timeout = FALSE;
 
  //Variables for controlling the timeout behaviour of the subscribed topic
  double last_sub = 0;
@@ -44,50 +48,13 @@ int HC_SR04_ECHO = 22; // digital
 int YELLOW_LED = 13; // analog
 
 /**
- * Writes the speed to the motors
- * @param left speed of the left motor
- * @param right speed of the right motor
- */
-void Move(){
-  // restrict left and right to -255 to 255
-  left = ((left < -255) ? -255 : left);
-  left = ((left > 255) ? 255 : left);
-  right = ((right < -255) ? -255 : right);
-  right = ((right > 255) ? 255 : right);
-  // write pins
-  if (left < 0) {
-    analogWrite(LCHB_100_1REV, -left);
-    analogWrite(LCHB_100_1FWD, 0);
-  } else {
-    analogWrite(LCHB_100_1REV, 0);
-    analogWrite(LCHB_100_1FWD, left);
-  }
-  if (right < 0) {
-    analogWrite(LCHB_100_2REV, -right);
-    analogWrite(LCHB_100_2FWD, 0);
-  } else {
-    analogWrite(LCHB_100_2REV, 0);
-    analogWrite(LCHB_100_2FWD, right);
-  }
-}
-
-/**
  * Meassures the distance to the next obstacle based on ultrasonic sensor.
  * @return distance in cm
  */
 int get_distance(){
-  // trigger
-  // make sure it's low
-  digitalWrite(HC_SR04_TRIGGER, LOW);
-  delay(5);
-  digitalWrite(HC_SR04_TRIGGER, HIGH);
-  delay(20);
-  digitalWrite(HC_SR04_TRIGGER, LOW);
 
   int duration = pulseIn(HC_SR04_ECHO, HIGH);
   int cm = (duration/2) / 29.1;
-
-  //cm = ((cm < 0) ? 0 : cm);
 
   return cm;
 }
@@ -99,17 +66,14 @@ ros::NodeHandle_<NewHardware> nh;
 
 
 void calculate_velocities(double x, double yaw){
+  current_speed = x;
   if (x > TRACK_SPEED) {
     x = TRACK_SPEED;
   }
-  if (yaw != 0 && x!=0) {
+  if (yaw != 0) {
     left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED;
     right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED;
-  } else if(yaw != 0 && x==0) {
-    left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED+50;
-    right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED-50;
-  }
-   else {
+  } else {
     left = right = x*255/TRACK_SPEED;
   }
 }
@@ -122,7 +86,11 @@ void twist_messageCb( const geometry_msgs::Twist& twist_msg){
   last_sub = millis();
   double yaw = twist_msg.angular.z; // rad/s
   double x = twist_msg.linear.x;    //   m/s
-  calculate_velocities(x, yaw);
+  if (state == 2) {
+    calculate_velocities(x, yaw);
+  } else if (state == 4) {
+    calculate_velocities(speed_adjust, yaw)
+  }
 }
 
 ros::Subscriber<std_msgs::Empty> led_sub("toggle_led", led_messageCb);
@@ -150,12 +118,82 @@ void setup()
 
   Serial.begin(9600);
 
+  // Setting up timer 5 for timeout behaviour (1Hz)
+  noInterrupts();
+  TCCR5A = 0;
+  TCCR5B = 0;
+  TCNT5 = 0;
+  OCR5A = 62499;
+  TCCR5B |= (1 << WGM12); //CTC mode
+  TCCR5B |= (1 << CS52);
+  TIMSK5 |= (1 << OCIE5A);
+
+  // Setting up timer 1 for firing pulses at 4Hz interval
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
+  OCR1A = 15624;
+  TCCR1B |= (1 << WGM12); //CTC mode
+  TCCR1B |= (1 << CS12);
+  TIMSK1 |= (1 << OCIE1A);
+  interrupts();
+
   Start();
+}
+
+ISR(TIMER5_COMPA_vect) {
+  timeout = TRUE;
+}
+
+ISR(TIMER1_COMPA_vect) {
+  digitalWrite(HC_SR04_TRIGGER, LOW);
+  delayMicroseconds(5);
+  digitalWrite(HC_SR04_TRIGGER, HIGH);
+  delayMicroseconds(20);
+  digitalWrite(HC_SR04_TRIGGER, LOW);
 }
 
 void Start() {
   digitalWrite(LCHB_100_1EN, HIGH);
   digitalWrite(LCHB_100_2EN, HIGH);
+}
+
+void Move() {
+  // restrict left and right to -255 to 255
+  left = ((left < -255) ? -255 : left);
+  left = ((left > 255) ? 255 : left);
+  right = ((right < -255) ? -255 : right);
+  right = ((right > 255) ? 255 : right);
+  // write pins
+  if (left < 0) {
+    analogWrite(LCHB_100_1REV, -left);
+    analogWrite(LCHB_100_1FWD, 0);
+  } else {
+    analogWrite(LCHB_100_1REV, 0);
+    analogWrite(LCHB_100_1FWD, left);
+  }
+  if (right < 0) {
+    analogWrite(LCHB_100_2REV, -right);
+    analogWrite(LCHB_100_2FWD, 0);
+  } else {
+    analogWrite(LCHB_100_2REV, 0);
+    analogWrite(LCHB_100_2FWD, right);
+  }
+}
+
+void Follow() {
+  check_follow_time = millis();
+  if (distance_adjust < get_distance()) {
+    speed_adjust += current_speed/10;
+  } else if (distance_adjust > get_distance()) {
+    speed_adjust -= current_speed/10;
+  }
+  distance_adjust = get_distance();
+  if (speed_adjust > current_speed) {
+    speed_adjust = current_speed;
+  } else if (speed_adjust < 0) {
+    speed_adjust = 0;
+  }
 }
 
 void Stop() {
@@ -166,22 +204,27 @@ void Stop() {
 void loop()
 {
   nh.spinOnce();
-  int distance = get_distance();
-  if (distance < 40 || millis()-last_sub > sub_timeout) {
-    analogWrite(YELLOW_LED, 127);
-    if (distance < 40){
-      analogWrite(YELLOW_LED, 255); 
-    }
-    state = 3;
+  distance_adjust = get_distance();
+  state();
+  if (state == 3) {
     Stop();
-  } else if (distance > 40 && state == 3) {
-    analogWrite(YELLOW_LED, 0);
-    state = 1;
+  } else if (state == 1) {
     Start();
-  } else {
-    analogWrite(YELLOW_LED, 0);
-    state = 2;
+  } else if (state == 2 || state == 4) {
     Move();
   }
   delay(100);
+}
+
+void state() {
+  if (distance_adjust < 20 || timeout == TRUE {
+    state = 3;
+  } else if (distance_adjust < 40) {
+    Follow();
+    state = 4;
+  } else if (distance_adjust > 40 && state == 3) {
+    state = 1;
+  } else {
+    state = 2;
+  }
 }

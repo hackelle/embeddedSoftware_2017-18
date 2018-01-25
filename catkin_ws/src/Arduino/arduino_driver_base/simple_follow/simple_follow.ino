@@ -54,9 +54,9 @@ int get_distance(){
   // trigger
   // make sure it's low
   digitalWrite(HC_SR04_TRIGGER, LOW);
-  delay(5);
+  delayMicroseconds(5);
   digitalWrite(HC_SR04_TRIGGER, HIGH);
-  delay(20);
+  delayMicroseconds(20);
   digitalWrite(HC_SR04_TRIGGER, LOW);
 
   int duration = pulseIn(HC_SR04_ECHO, HIGH);
