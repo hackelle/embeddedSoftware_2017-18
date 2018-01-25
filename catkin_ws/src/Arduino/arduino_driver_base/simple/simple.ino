@@ -164,7 +164,10 @@ void loop()
   nh.spinOnce();
   int distance = get_distance();
   if (distance < 40 || millis()-last_sub > sub_timeout) {
-    analogWrite(YELLOW_LED, 255);
+    analogWrite(YELLOW_LED, 127);
+    if (distance < 40){
+      analogWrite(YELLOW_LED, 255); 
+    }
     state = 3;
     Stop();
   } else if (distance > 40 && state == 3) {

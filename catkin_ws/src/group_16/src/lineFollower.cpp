@@ -1,7 +1,7 @@
 #include "lineFollower.h"
 
 //#define DEBUG_SAVE
-#define DEBUG_LOAD
+//#define DEBUG_LOAD
 
 // show the picture
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
@@ -20,11 +20,11 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
         std::cout << "done" << std::endl;
 
         // always go full speed (no robot can go 1m/s)
-        sendMessage(0.11,0,0,
+        sendMessage(0.05,0,0,
                     0,0,angular_vel_z);
 
         // wait a short time for image-display (25 for mobile, 100 for debug)
-        cv::waitKey(500);
+        cv::waitKey(25);
     }
     catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'jpg'.", msg->encoding.c_str());
