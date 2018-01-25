@@ -20,6 +20,7 @@ double distance_adjust = 0;
 
  //State of the machine
  int state = 3;  // 1->Start; 2->Move; 3->Stop; 4->Follow
+ timeout = FALSE;
 
  //Variables for controlling the timeout behaviour of the subscribed topic
  double last_sub = 0;
@@ -51,18 +52,9 @@ int YELLOW_LED = 13; // analog
  * @return distance in cm
  */
 int get_distance(){
-  // trigger
-  // make sure it's low
-  digitalWrite(HC_SR04_TRIGGER, LOW);
-  delayMicroseconds(5);
-  digitalWrite(HC_SR04_TRIGGER, HIGH);
-  delayMicroseconds(20);
-  digitalWrite(HC_SR04_TRIGGER, LOW);
 
   int duration = pulseIn(HC_SR04_ECHO, HIGH);
   int cm = (duration/2) / 29.1;
-
-  //cm = ((cm < 0) ? 0 : cm);
 
   return cm;
 }
@@ -126,7 +118,39 @@ void setup()
 
   Serial.begin(9600);
 
+  // Setting up timer 5 for timeout behaviour (1Hz)
+  noInterrupts();
+  TCCR5A = 0;
+  TCCR5B = 0;
+  TCNT5 = 0;
+  OCR5A = 62499;
+  TCCR5B |= (1 << WGM12); //CTC mode
+  TCCR5B |= (1 << CS52);
+  TIMSK5 |= (1 << OCIE5A);
+
+  // Setting up timer 1 for firing pulses at 4Hz interval
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
+  OCR1A = 15624;
+  TCCR1B |= (1 << WGM12); //CTC mode
+  TCCR1B |= (1 << CS12);
+  TIMSK1 |= (1 << OCIE1A);
+  interrupts();
+
   Start();
+}
+
+ISR(TIMER5_COMPA_vect) {
+  timeout = TRUE;
+}
+
+ISR(TIMER1_COMPA_vect) {
+  digitalWrite(HC_SR04_TRIGGER, LOW);
+  delayMicroseconds(5);
+  digitalWrite(HC_SR04_TRIGGER, HIGH);
+  delayMicroseconds(20);
+  digitalWrite(HC_SR04_TRIGGER, LOW);
 }
 
 void Start() {
@@ -193,7 +217,7 @@ void loop()
 }
 
 void state() {
-  if (distance_adjust < 20 || millis()-last_sub > sub_timeout) {
+  if (distance_adjust < 20 || timeout == TRUE {
     state = 3;
   } else if (distance_adjust < 40) {
     Follow();
