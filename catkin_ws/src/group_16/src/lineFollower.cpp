@@ -2,6 +2,7 @@
 
 //#define DEBUG_SAVE
 //#define DEBUG_LOAD
+float last_turn = 0;
 
 // show the picture
 void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
@@ -17,6 +18,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
         std::cout << "detecting line" << std::endl;
         float angular_vel_z = detect_line_simple(inImage);
+        if (angular_vel_z > 0.25 || angular_vel_z < -0.25){
+            last_turn = angular_vel_z;
+            sendMessage(0.05,0,0,
+                        0,0,angular_vel_z);
+        } else {
+            angular_vel_z = last_turn;
+            sendMessage(0.03,0,0,
+                        0,0,last_turn);
+        }
         std::cout << "done" << std::endl;
 
         // always go full speed (no robot can go 1m/s)

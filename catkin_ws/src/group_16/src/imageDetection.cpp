@@ -237,7 +237,7 @@ float detect_line_simple(cv::Mat inImage){
     perspectiveMat = greyMat;
 
     // how much of the bottom part of the picture is relevant for our calculation?
-    double relevant_part_y = 0.15;
+    double relevant_part_y = 0.07;
     double relevant_part_x_min = 0.1;
     double relevant_part_x_max = 0.9;
 
@@ -287,7 +287,7 @@ float detect_line_simple(cv::Mat inImage){
     // calculate the angle of rotation based on the distance
     double *angle = new double(0);
     double *speed = new double(151); // 11cm/s; 1px ~ .73mm, 1mm ~ 1.37 px
-    int offset = 140; // (in pixel); 212 ~ 15.5cm, 110 ~ 8cm
+    int offset = 130; // (in pixel); 212 ~ 15.5cm, 110 ~ 8cm 140 basic ok
 
     Point robot = Point(135, offset + relevant_part_y * perspectiveMat.rows); // center of robot
     Point goal = Point(av_x, relevant_part_y/2 * perspectiveMat.rows); // goal I want to drive to
