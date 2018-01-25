@@ -11,14 +11,16 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
         // save if debugging-saving
 #ifdef DEBUG_SAVE
-        imwrite(image_path, InImage);
+        imwrite(image_path, inImage);
 #endif // DEBUG_SAVE
 
 
+        std::cout << "detecting line" << std::endl;
         float angular_vel_z = detect_line_simple(inImage);
+        std::cout << "done" << std::endl;
 
         // always go full speed (no robot can go 1m/s)
-        sendMessage(0.05,0,0,
+        sendMessage(0.11,0,0,
                     0,0,angular_vel_z);
 
         // wait a short time for image-display (25 for mobile, 100 for debug)
@@ -62,9 +64,10 @@ int main(int argc, char **argv) {
     //cv::namedWindow("Scaled image", CV_WINDOW_NORMAL);
     cv::namedWindow("Grey image", CV_WINDOW_NORMAL);
     //cv::namedWindow("Blur image", CV_WINDOW_NORMAL);
-    cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
+    //cv::namedWindow("Canny image", CV_WINDOW_NORMAL);
     //cv::namedWindow("Edge image", CV_WINDOW_NORMAL);
     cv::namedWindow("Perspective image", CV_WINDOW_NORMAL);
+    cv::namedWindow("Debug image", CV_WINDOW_NORMAL);
     cv::namedWindow("Line image", CV_WINDOW_NORMAL);
     // FIXME: for some reason the last window is not shown
     //cv::namedWindow("dummy", CV_WINDOW_NORMAL);
@@ -81,7 +84,7 @@ int main(int argc, char **argv) {
 
 #ifdef DEBUG_LOAD
         // send the saved&reloaded image to trigger the callback
-        std::cout << "Fake sending image" << std::endl;
+        std::cout << "Fake sending image" << std::endl << std::endl << std::endl;
         debug_pub.publish(img_msg);
 #endif // DEBUG_LOAD
 
@@ -95,9 +98,10 @@ int main(int argc, char **argv) {
     //cv::destroyWindow("Scaled image");
     cv::destroyWindow("Grey image");
     //cv::destroyWindow("Blur image");
-    cv::destroyWindow("Canny image");
+    //cv::destroyWindow("Canny image");
     //cv::destroyWindow("Edge image");
     cv::destroyWindow("Perspective image");
+    cv::destroyWindow("Debug image");
     cv::destroyWindow("Line image");
     ros::shutdown();
 

@@ -88,7 +88,13 @@ std::string random_string(size_t length);
  */
 void perspectiveTransformForRobot(cv::Mat &src, cv::Mat &dst);
 
-void fit_lines(cv::Mat &img, double &smallest_distance_speed, double &smallest_distance_ang,
-                    double &smallest_distance_radius, double* distances, int y_pixel_offset);
+/**
+ * Fits different curvatures into a point array and returns speed and angular velocity for best fitting circle
+ * @param points point-vector to work on
+ * @param speed return value, best fitting speed
+ * @param angle return value, best fitting angular velocity
+ * @param offset amount of pixel "below" picture until real 0 of the robot
+ */
+void fit_lines(std::vector<cv::Point> points, double *speed, double *angle, int offset);
 
 #endif //CATKIN_WS_IMAGEDETECTION_H
