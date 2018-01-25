@@ -73,7 +73,11 @@ void calculate_velocities(double x, double yaw){
   if (yaw != 0) {
     left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED;
     right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED;
-  } else {
+  } else if(yaw != 0 && x==0) {
+    left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED+50;
+    right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED-50;
+  }
+  else {
     left = right = x*255/TRACK_SPEED;
   }
 }
@@ -137,8 +141,6 @@ void setup()
   TCCR1B |= (1 << CS12);
   TIMSK1 |= (1 << OCIE1A);
   interrupts();
-
-  Start();
 }
 
 ISR(TIMER5_COMPA_vect) {
