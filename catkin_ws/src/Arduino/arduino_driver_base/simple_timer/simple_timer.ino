@@ -13,6 +13,7 @@ double TRACK_SPEED = 0.18;
 double current_speed = 0;
 double speed_adjust = 0;
 double distance_adjust = 0;
+int check_follow_time = 0;
 
  //global variable for left and right drivetrain speed
  int left = 0;
@@ -20,7 +21,7 @@ double distance_adjust = 0;
 
  //State of the machine
  int state = 3;  // 1->Start; 2->Move; 3->Stop; 4->Follow
- timeout = FALSE;
+ bool timeout = false;
 
  //Variables for controlling the timeout behaviour of the subscribed topic
  double last_sub = 0;
@@ -88,12 +89,13 @@ void led_messageCb( const std_msgs::Empty& toggle_msg){
 
 void twist_messageCb( const geometry_msgs::Twist& twist_msg){
   last_sub = millis();
+  TCNT5=0;
   double yaw = twist_msg.angular.z; // rad/s
   double x = twist_msg.linear.x;    //   m/s
   if (state == 2) {
     calculate_velocities(x, yaw);
   } else if (state == 4) {
-    calculate_velocities(speed_adjust, yaw)
+    calculate_velocities(speed_adjust, yaw);
   }
 }
 
@@ -144,7 +146,7 @@ void setup()
 }
 
 ISR(TIMER5_COMPA_vect) {
-  timeout = TRUE;
+  timeout = true;
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -153,6 +155,10 @@ ISR(TIMER1_COMPA_vect) {
   digitalWrite(HC_SR04_TRIGGER, HIGH);
   delayMicroseconds(20);
   digitalWrite(HC_SR04_TRIGGER, LOW);
+  
+  int duration = pulseIn(HC_SR04_ECHO, HIGH);
+  int cm = (duration/2) / 29.1;
+  distance_adjust = cm;
 }
 
 void Start() {
@@ -206,8 +212,7 @@ void Stop() {
 void loop()
 {
   nh.spinOnce();
-  distance_adjust = get_distance();
-  state();
+  state_func();
   if (state == 3) {
     Stop();
   } else if (state == 1) {
@@ -218,13 +223,13 @@ void loop()
   delay(100);
 }
 
-void state() {
-  if (distance_adjust < 20 || timeout == TRUE {
+void state_func() {
+  if (distance_adjust < 20 || timeout == true) {
     state = 3;
   } else if (distance_adjust < 40) {
     Follow();
     state = 4;
-  } else if (distance_adjust > 40 && state == 3) {
+  } else if (distance_adjust > 40 && (state == 3 || state == 4)) {
     state = 1;
   } else {
     state = 2;

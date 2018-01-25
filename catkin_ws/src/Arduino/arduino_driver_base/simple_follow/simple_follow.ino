@@ -13,6 +13,7 @@ double TRACK_SPEED = 0.18;
 double current_speed = 0;
 double speed_adjust = 0;
 double distance_adjust = 0;
+int check_follow_time=0;
 
  //global variable for left and right drivetrain speed
  int left = 0;
@@ -97,7 +98,7 @@ void twist_messageCb( const geometry_msgs::Twist& twist_msg){
   if (state == 2) {
     calculate_velocities(x, yaw);
   } else if (state == 4) {
-    calculate_velocities(speed_adjust, yaw)
+    calculate_velocities(speed_adjust, yaw);
   }
 }
 
@@ -181,7 +182,7 @@ void loop()
 {
   nh.spinOnce();
   distance_adjust = get_distance();
-  state();
+  state_func();
   if (state == 3) {
     Stop();
   } else if (state == 1) {
@@ -192,13 +193,13 @@ void loop()
   delay(100);
 }
 
-void state() {
+void state_func() {
   if (distance_adjust < 20 || millis()-last_sub > sub_timeout) {
     state = 3;
   } else if (distance_adjust < 40) {
     Follow();
     state = 4;
-  } else if (distance_adjust > 40 && state == 3) {
+  } else if (distance_adjust > 40 && (state == 3 || state == 4)) {
     state = 1;
   } else {
     state = 2;

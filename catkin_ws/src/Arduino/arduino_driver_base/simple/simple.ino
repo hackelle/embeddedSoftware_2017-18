@@ -79,9 +79,9 @@ int get_distance(){
   // trigger
   // make sure it's low
   digitalWrite(HC_SR04_TRIGGER, LOW);
-  delayMicroseconds(5);
+  delay(5);
   digitalWrite(HC_SR04_TRIGGER, HIGH);
-  delayMicroseconds(20);
+  delay(20);
   digitalWrite(HC_SR04_TRIGGER, LOW);
 
   int duration = pulseIn(HC_SR04_ECHO, HIGH);
@@ -102,14 +102,10 @@ void calculate_velocities(double x, double yaw){
   if (x > TRACK_SPEED) {
     x = TRACK_SPEED;
   }
-  if (yaw != 0 && x!=0) {
+  if (yaw != 0) {
     left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED;
     right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED;
-  } else if(yaw != 0 && x==0) {
-    left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED+50;
-    right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED-50;
-  }
-   else {
+  } else {
     left = right = x*255/TRACK_SPEED;
   }
 }
@@ -148,7 +144,7 @@ void setup()
   pinMode(HC_SR04_TRIGGER, OUTPUT);
   pinMode(HC_SR04_ECHO, INPUT);
 
-  Serial.begin(9600);
+  //Serial.begin(9600);
 
   Start();
 }
