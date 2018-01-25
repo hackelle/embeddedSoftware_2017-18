@@ -102,10 +102,14 @@ void calculate_velocities(double x, double yaw){
   if (x > TRACK_SPEED) {
     x = TRACK_SPEED;
   }
-  if (yaw != 0) {
+  if (yaw != 0 && x!=0) {
     left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED;
     right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED;
-  } else {
+  } else if(yaw != 0 && x==0) {
+    left = (x+0.2827/(4*PI/yaw))*255/TRACK_SPEED+50;
+    right = (x-0.2827/(4*PI/yaw))*255/TRACK_SPEED-50;
+  }
+   else {
     left = right = x*255/TRACK_SPEED;
   }
 }
