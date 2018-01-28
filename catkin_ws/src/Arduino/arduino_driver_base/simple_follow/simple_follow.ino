@@ -73,7 +73,9 @@ class NewHardware : public ArduinoHardware {
 };
 ros::NodeHandle_<NewHardware> nh;
 
-
+/**
+ * Calculates and maps the speed for left and right track
+ */
 void calculate_velocities(double x, double yaw){
   current_speed = x;
   if (x > TRACK_SPEED) {
@@ -91,6 +93,9 @@ void led_messageCb( const std_msgs::Empty& toggle_msg){
   digitalWrite(YELLOW_LED, HIGH-digitalRead(13));   // blink the led
 }
 
+/**
+ * Callback of the ros subscriber ("cmd_vel")
+ */
 void twist_messageCb( const geometry_msgs::Twist& twist_msg){
   last_sub = millis();
   double yaw = twist_msg.angular.z; // rad/s
